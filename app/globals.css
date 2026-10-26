@@ -1120,6 +1120,17 @@ button:disabled {
   font-size: 28px;
   font-weight: 500;
 }
+.letter-choice .choice-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.choice-label strong {
+  display: block;
+  line-height: 1.25;
+  min-height: 1.25em;
+}
 .choice-action {
   display: flex !important;
   align-items: center;
@@ -1526,13 +1537,13 @@ button:disabled {
   width: 170px;
   bottom: 20px;
   left: calc(50% - 350px);
-  rotate: -10deg;
+  rotate: none;
 }
 .closing-bow.right {
   left: auto;
   right: calc(50% - 340px);
   transform: scaleX(-1);
-  rotate: 10deg;
+  rotate: none;
 }
 .closing-balloon {
   position: absolute;
@@ -4450,9 +4461,13 @@ button:disabled {
   width: 200px;
   left: calc(50% - 570px);
   bottom: 85px;
+  rotate: none;
+  transform: none;
 }
 .closing-bow.right {
-  right: calc(50% - 565px);
+  right: calc(50% - 570px);
+  rotate: none;
+  transform: scaleX(-1);
 }
 .closing-balloon {
   width: 110px;
@@ -4628,6 +4643,7 @@ button:disabled {
   z-index: 1;
 }
 .opening-character-backdrop .opening-lion {
+  --character-size: calc(var(--lion-size) * 0.95);
   z-index: 2;
   left: calc(50% - min(230px, 16.5vw, 28svh) - var(--character-size) * 0.76);
   /* Paw baselines account for the transparent space beneath each illustration. */
@@ -5290,7 +5306,7 @@ button:disabled {
 .held-bouquet .balloon-body::after { width: 7px; height: 7px; left: calc(50% - 3.5px); bottom: -5px; }
 @media (min-width: 1101px) and (min-height: 501px) {
   .held-bouquet {
-    --bouquet-width: min(80%, 450px);
+    --bouquet-width: min(30vw, 330px, 52svh);
     left: calc(55% - var(--bouquet-width) * 0.7143);
   }
   .opening-kitten .held-bouquet { left: auto; right: calc(55% - var(--bouquet-width) * 0.7143); }

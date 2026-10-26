@@ -301,9 +301,8 @@ export default function Letters() {
             <div className="mini-envelope" aria-hidden="true">
               <Heart size={17} fill="currentColor" />
             </div>
-            <span>
-              Лист для
-              <br />
+            <span className="choice-label">
+              <span>Лист для</span>
               <strong>{CHILDREN[child].recipient}</strong>
             </span>
             <span className="choice-action">

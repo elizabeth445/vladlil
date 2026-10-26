@@ -127,5 +127,20 @@ test("closing composition stays centered with equal mobile page margins", async 
     expect(Math.abs(composition.left - composition.right)).toBeLessThan(2);
     expect(composition.overflow).toBe(false);
     await expect(page.locator(".greeting-toys")).toHaveCount(0);
+    const bows = await page.locator(".closing-bow").evaluateAll(elements => elements.map(element => {
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: innerWidth - box.right, top: box.top, width: box.width, mirrored: getComputedStyle(element).transform.startsWith("matrix(-1") };
+    }));
+    expect(bows).toHaveLength(2);
+    expect(Math.abs(bows[0].left - bows[1].right)).toBeLessThan(2);
+    expect(Math.abs(bows[0].top - bows[1].top)).toBeLessThan(2);
+    expect(Math.abs(bows[0].width - bows[1].width)).toBeLessThan(2);
+    expect(bows.map(bow => bow.mirrored)).toEqual([false, true]);
+    await page.locator(".letter-choices").scrollIntoViewIfNeeded();
+    for (const index of [0, 1]) {
+      await page.locator(".letter-choice").nth(index).click();
+      const baselines = await page.locator(".choice-label strong").evaluateAll(elements => elements.map(element => element.getBoundingClientRect().bottom));
+      expect(Math.abs(baselines[0] - baselines[1])).toBeLessThan(2);
+    }
   }
 });

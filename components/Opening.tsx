@@ -226,7 +226,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
         <div className="opening-character-backdrop" aria-hidden="true">
           <Character
             kind="lion"
-            src="/art/lion-opening.webp"
+            src="/art/lion-opening-close.webp"
             className="opening-lion"
             priority
           >

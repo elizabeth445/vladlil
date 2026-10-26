@@ -516,7 +516,7 @@ button:disabled {
   font-size: 14px;
   color: #8b7563;
   display: block;
-  rotate: -2deg;
+  rotate: none;
 }
 .story-pink {
   direction: rtl;

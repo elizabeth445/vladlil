@@ -59,6 +59,18 @@ test("compact invitation centers the envelope between its hosts and keeps contro
     expect(scene.left).toBeGreaterThanOrEqual(0);
     expect(scene.right).toBeLessThanOrEqual(scene.width);
     expect(scene.dialogWidth).toBe(scene.width);
+    if (viewport.width <= 767) {
+      const visibleBalloons = await page.locator(".opening-balloon").evaluateAll(elements => elements.every(element => {
+        const box = element.getBoundingClientRect();
+        return box.left >= 0 && box.right <= innerWidth;
+      }));
+      expect(visibleBalloons).toBe(true);
+      const layers = await page.evaluate(() => ({
+        characters: Number(getComputedStyle(document.querySelector(".opening-character-backdrop")!).zIndex),
+        envelope: Number(getComputedStyle(document.querySelector(".opening-stage")!).zIndex),
+      }));
+      expect(layers.characters).toBeGreaterThan(layers.envelope);
+    }
     const open = page.getByRole("button", { name: "Відкрити запрошення", exact: true });
     await open.scrollIntoViewIfNeeded();
     const box = await open.boundingBox();
@@ -93,4 +105,21 @@ test("narrow scene opens by touching the centered envelope and reveals all card 
   expect(card.overflow).toBe(false);
   expect(card.blue).not.toBe(card.pink);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+});
+
+test("closing composition stays centered with equal mobile page margins", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto("/");
+    await page.getByRole("button", { name: "Пропустити", exact: true }).click();
+    await page.locator(".closing-greeting").scrollIntoViewIfNeeded();
+    const composition = await page.locator(".closing-greeting").evaluate(element => {
+      const box = element.getBoundingClientRect();
+      return { left: box.left, right: innerWidth - box.right, overflow: document.documentElement.scrollWidth > innerWidth };
+    });
+    expect(Math.abs(composition.left - composition.right)).toBeLessThan(2);
+    expect(composition.overflow).toBe(false);
+    await expect(page.locator(".greeting-toys")).toHaveCount(0);
+  }
 });

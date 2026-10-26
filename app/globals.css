@@ -3389,10 +3389,6 @@ button:disabled {
 .balloon-remnant > span {
   font-size: 15px;
 }
-.balloon-remnant > svg {
-  margin-top: 6px;
-  color: #896b54;
-}
 .confetti-layer {
   position: absolute;
   left: 0;
@@ -4565,32 +4561,34 @@ button:disabled {
     max-width: 330px;
   }
   .closing-greeting {
-    width: calc(100% + 16px);
+    width: 100%;
     max-width: 440px;
     margin-inline: auto;
     margin-top: 40px;
   }
+  .closing-greeting .greeting-lion { translate: 2.5% 0; }
+  .closing-greeting .greeting-kitten { translate: -8% 3.75%; }
   .closing .closing-date {
     font-size: 15px;
     gap: 8px;
     flex-wrap: wrap;
   }
   .closing-bow {
-    width: 100px;
-    left: -28px;
-    bottom: 50px;
+    width: 56px;
+    left: 4px;
+    bottom: 155px;
   }
   .closing-bow.right {
-    right: -28px;
+    right: 4px;
   }
   .closing-balloon {
     width: 58px;
-    left: -8px;
+    left: 6px;
     top: 190px;
   }
   .closing-balloon.pink {
     width: 58px;
-    right: -8px;
+    right: 6px;
     top: 200px;
   }
   .closing-balloon.closing-balloon-gold {
@@ -4603,6 +4601,13 @@ button:disabled {
     right: 10px;
     top: 50px;
   }
+}
+
+@media (min-width: 768px) and (max-width: 1100px) {
+  .closing-bow { width: 88px; left: 12px; bottom: 100px; }
+  .closing-bow.right { right: 12px; }
+  .closing-balloon { width: 65px; left: 16px; }
+  .closing-balloon.pink { width: 65px; right: 16px; }
 }
 
 .pearl-balloon {
@@ -4844,7 +4849,6 @@ button:disabled {
 .closing-greeting > .greeting-character {
   z-index: 1;
 }
-.greeting-toys,
 .greeting-flowers {
   position: absolute;
   aspect-ratio: 1;
@@ -4852,13 +4856,6 @@ button:disabled {
   background-size: 200% 100%;
   background-repeat: no-repeat;
   pointer-events: none;
-}
-.greeting-toys {
-  width: 33%;
-  left: 18%;
-  bottom: -4%;
-  background-position: 0 0;
-  z-index: 2;
 }
 .greeting-flowers {
   width: 40%;
@@ -4953,39 +4950,41 @@ button:disabled {
     left: calc(50% - 24px);
   }
   .opening-balloon-backdrop .opening-balloon {
-    width: 76px;
+    width: clamp(66px, 20vw, 88px);
   }
+  .opening-balloon-2 .balloon-string,
+  .opening-balloon-3 .balloon-string { height: 20px; }
   .opening-balloon-0 {
-    left: -8%;
-    top: 29%;
+    left: 3%;
+    top: 38%;
   }
   .opening-balloon-1 {
-    right: -8%;
-    top: 31%;
+    right: 3%;
+    top: 39%;
   }
   .opening-balloon-2 {
-    left: -10%;
-    top: 1%;
+    left: 7%;
+    top: 3%;
   }
   .opening-balloon-3 {
-    right: -10%;
-    top: 5%;
+    right: 7%;
+    top: 7%;
   }
   .opening-balloon-4 {
-    left: -20%;
+    left: 1%;
     top: 56%;
   }
   .opening-balloon-5 {
-    right: -18%;
-    top: 60%;
+    right: 1%;
+    top: 57%;
   }
   .opening-balloon-6 {
-    left: -15%;
-    top: 66%;
+    left: 5%;
+    top: 77%;
   }
   .opening-balloon-7 {
-    right: -15%;
-    top: 70%;
+    right: 5%;
+    top: 80%;
   }
 }
 @media (max-width: 767px) and (max-height: 720px) {
@@ -5367,6 +5366,10 @@ button:disabled {
   .opening-caption .little-hearts { display: none; }
 }
 @media (max-width: 767px) {
+  .opening-scene { isolation: isolate; z-index: 1; }
+  .opening-scene .opening-character-backdrop { z-index: 4; }
+  .opening-character-backdrop .opening-lion { left: 4px; }
+  .opening-character-backdrop .opening-kitten { right: 4px; }
   .header-actions > button { min-width: 44px; min-height: 44px; }
   .venue-image > img { height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
   .venue-copy > .button { width: 100%; justify-content: center; }

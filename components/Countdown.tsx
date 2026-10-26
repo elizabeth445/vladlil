@@ -3,7 +3,7 @@ import { memo, useEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { RotateCcw, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { countdown } from "@/lib/event";
 import { Balloon, Star, PartyArtwork } from "./Artwork";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -23,27 +23,6 @@ const ClockBalloon = memo(function ClockBalloon({
   const poppedRef = useRef(false);
   const [popped, setPopped] = useState(false);
   const { contextSafe } = useGSAP({ scope: root });
-  const restore = () =>
-    contextSafe(() => {
-      animation.current?.kill();
-      poppedRef.current = false;
-      setPopped(false);
-      gsap.set(".confetti-piece", { opacity: 0 });
-      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      animation.current = gsap
-        .timeline()
-        .set(".balloon-remnant", { autoAlpha: 0 })
-        .fromTo(
-          ".balloon-pop-art",
-          { scale: 0.7, autoAlpha: 0 },
-          {
-            scale: 1,
-            autoAlpha: 1,
-            duration: reduced ? 0 : 0.65,
-            ease: "elastic.out(1,.6)",
-          },
-        );
-    })();
   useEffect(() => {
     const media = matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => {
@@ -54,20 +33,24 @@ const ClockBalloon = memo(function ClockBalloon({
   }, []);
   const pop = () =>
     contextSafe(() => {
-      if (poppedRef.current) {
-        restore();
-        return;
-      }
+      if (poppedRef.current) return;
       animation.current?.kill();
       poppedRef.current = true;
       setPopped(true);
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const timeline = gsap.timeline();
+      const timeline = gsap.timeline({
+        onComplete: () => {
+          poppedRef.current = false;
+          setPopped(false);
+        },
+      });
       animation.current = timeline;
       if (reduced) {
         timeline
           .set(".balloon-pop-art", { autoAlpha: 0 })
-          .set(".balloon-remnant", { autoAlpha: 1 });
+          .set(".balloon-remnant", { autoAlpha: 1 })
+          .set(".balloon-remnant", { autoAlpha: 0 }, 1.15)
+          .set(".balloon-pop-art", { autoAlpha: 1, scale: 1 }, 1.15);
         return;
       }
       timeline
@@ -115,6 +98,14 @@ const ClockBalloon = memo(function ClockBalloon({
             0.58,
           );
       }
+      timeline
+        .to(".balloon-remnant", { autoAlpha: 0, duration: 0.2 }, 1.55)
+        .fromTo(
+          ".balloon-pop-art",
+          { scale: 0.7, autoAlpha: 0 },
+          { scale: 1, autoAlpha: 1, duration: 0.65, ease: "elastic.out(1,.6)" },
+          1.7,
+        );
     })();
   const display = value === null ? "··" : String(value).padStart(2, "0");
   return (
@@ -122,7 +113,8 @@ const ClockBalloon = memo(function ClockBalloon({
       ref={root}
       type="button"
       className={`clock-pop ${popped ? "is-popped" : ""}`}
-      aria-label={`${popped ? "Повернути" : "Лопнути"} кульку «${units[index]}»`}
+      aria-label={`Лопнути кульку «${units[index]}»`}
+      aria-disabled={popped}
       aria-pressed={popped}
       onClick={pop}
     >
@@ -140,7 +132,6 @@ const ClockBalloon = memo(function ClockBalloon({
       <span className="balloon-remnant" aria-hidden={!popped}>
         <strong>{display}</strong>
         <span>{units[index]}</span>
-        <RotateCcw size={19} />
       </span>
       <span className="confetti-layer" aria-hidden="true">
         {Array.from({ length: 18 }, (_, i) => (

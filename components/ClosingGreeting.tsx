@@ -8,16 +8,13 @@ import { useGSAP } from "@gsap/react";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 
 const sheet = "/art/greeting-poses.webp";
-const pawShapes = {
-  lion: "M65 77C64 71 66 64 66 58C62 51 64 47 70 47C80 44 82 51 79 58L76 75Z",
-  kitten: "M25 70C22 67 18 58 18 51C15 45 19 40 25 41C31 40 34 45 32 51L32 65Z",
-};
-
 function GreetingCharacter({ kind }: { kind: "lion" | "kitten" }) {
   const id = useId().replaceAll(":", "");
   const row = kind === "lion" ? 0 : -100;
   const [cx, cy] = kind === "lion" ? [72, 53] : [25, 48];
-  const motionMap = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="wave" gradientUnits="userSpaceOnUse" cx="${cx}" cy="${cy}" r="19"><stop stop-color="#ff8080"/><stop offset="1" stop-color="#808080"/></radialGradient></defs><path fill="#808080" d="M0 0h100v100H0z"/><path fill="url(#wave)" d="${pawShapes[kind]}"/></svg>`)}`;
+  // A continuous field moves the wrist and fades to zero at the shoulder.
+  // No cut-out limb or hard mask boundary can separate the paw from the body.
+  const motionMap = `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="wave"><stop stop-color="#ee7c80"/><stop offset=".3" stop-color="#dc7e80"/><stop offset=".7" stop-color="#9a8080"/><stop offset="1" stop-color="#808080"/></radialGradient></defs><path fill="#808080" d="M0 0h100v100H0z"/><ellipse cx="${cx}" cy="${cy}" rx="11" ry="24" fill="url(#wave)"/></svg>`)}`;
   return (
     <span className={`greeting-character greeting-${kind}`} aria-hidden="true">
       {[0, 1].map((pose) => (
@@ -97,12 +94,12 @@ function createGreetingTimeline(container: HTMLElement) {
     .to(select(".greeting-pose-wave"), { opacity: 1 }, "<")
     .to(
       select(".greeting-lion .greeting-paw-motion"),
-      { attr: { scale: 6 }, duration: 0.27, repeat: 3, yoyo: true },
+      { attr: { scale: 8.5 }, duration: 0.32, repeat: 3, yoyo: true, ease: "sine.inOut" },
       "+=0.05",
     )
     .to(
       select(".greeting-kitten .greeting-paw-motion"),
-      { attr: { scale: -6 }, duration: 0.27, repeat: 3, yoyo: true },
+      { attr: { scale: -8.5 }, duration: 0.32, repeat: 3, yoyo: true, ease: "sine.inOut" },
       "<0.08",
     )
     .to(select(".greeting-pose-wave"), { opacity: 0 }, "+=0.2")
@@ -122,8 +119,9 @@ export default function ClosingGreeting() {
         ScrollTrigger.create({
           trigger: root.current,
           start: "top 78%",
-          once: true,
-          onEnter: () => timeline.play(),
+          end: "bottom 18%",
+          onEnter: () => timeline.restart(),
+          onEnterBack: () => timeline.restart(),
         });
         return () => {
           sequence.current = null;
@@ -145,7 +143,6 @@ export default function ClosingGreeting() {
       <span className="greeting-flowers" aria-hidden="true" />
       <GreetingCharacter kind="lion" />
       <GreetingCharacter kind="kitten" />
-      <span className="greeting-toys" aria-hidden="true" />
     </button>
   );
 }

@@ -40,7 +40,15 @@ test("closing greeting turns to the guest, waves gently, settles and replays", a
     name: "Привітатися з іменинниками ще раз",
   });
   await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(4100);
+  await page.waitForTimeout(1900);
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
+  await expect(greeting.locator(".greeting-toys")).toHaveCount(0);
+  await page.locator("#rsvp").scrollIntoViewIfNeeded();
+  await greeting.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(1900);
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
   await greeting.click();
   await expect(greeting.locator(".greeting-pose-0").first()).toHaveCSS(
     "opacity",
@@ -58,7 +66,7 @@ test("closing greeting turns to the guest, waves gently, settles and replays", a
       .evaluate((e) => {
         return Math.abs(Number(e.getAttribute("scale")));
       }),
-  ).toBeLessThanOrEqual(6.1);
+  ).toBeLessThanOrEqual(8.6);
   await expect(greeting.locator(".greeting-pose-1").first()).toHaveCSS(
     "opacity",
     "1",
@@ -166,48 +174,31 @@ test("hero parallax moves layers at different speeds and resets on reverse scrol
       ),
   ).toBeCloseTo(0, 0);
 });
-test("balloons pop with confetti, keep timer readable and restore individually", async ({
-  page,
-}) => {
+test("balloons pop with confetti and automatically become ready for another pop", async ({ page }) => {
   await enter(page);
   await page.locator(".birthday-clock").scrollIntoViewIfNeeded();
   const balloon = page.getByRole("button", { name: "Лопнути кульку «Днів»" });
   await balloon.click();
   await page.waitForTimeout(250);
-  const popped = page.getByRole("button", { name: "Повернути кульку «Днів»" });
-  await expect(popped).toHaveAttribute("aria-pressed", "true");
-  expect(
-    await popped
-      .locator(".confetti-piece")
-      .evaluateAll((xs) =>
-        xs.some((e) => Number(getComputedStyle(e).opacity) > 0),
-      ),
-  ).toBe(true);
-  await expect(popped.locator(".balloon-remnant")).toBeVisible();
-  await page.waitForTimeout(1200);
-  expect(
-    await popped
-      .locator(".confetti-piece")
-      .evaluateAll((xs) =>
-        xs.every((e) => Number(getComputedStyle(e).opacity) === 0),
-      ),
-  ).toBe(true);
-  await popped.click();
-  await expect(
-    page.getByRole("button", { name: "Лопнути кульку «Днів»" }),
-  ).toHaveAttribute("aria-pressed", "false");
+  await expect(balloon).toHaveAttribute("aria-pressed", "true");
+  await expect(balloon).toHaveAttribute("aria-disabled", "true");
+  expect(await balloon.locator(".confetti-piece").evaluateAll(xs =>
+    xs.some(e => Number(getComputedStyle(e).opacity) > 0),
+  )).toBe(true);
+  await expect(balloon.locator(".balloon-remnant")).toBeVisible();
+  await expect(balloon).toHaveAttribute("aria-disabled", "false");
+  await expect(balloon).toHaveAttribute("aria-pressed", "false");
+  await expect(balloon.locator(".balloon-pop-art")).toHaveCSS("opacity", "1");
+  await balloon.click();
+  await expect(balloon).toHaveAttribute("aria-pressed", "true");
+  await expect(balloon).toHaveAttribute("aria-pressed", "false");
   for (const unit of ["Днів", "Годин", "Хвилин", "Секунд"])
-    await page
-      .getByRole("button", { name: `Лопнути кульку «${unit}»` })
-      .click();
-  await expect(
-    page.getByRole("button", { name: "Повернути всі кульки" }),
-  ).toHaveCount(0);
-  for (const unit of ["Днів", "Годин", "Хвилин", "Секунд"])
-    await page
-      .getByRole("button", { name: `Повернути кульку «${unit}»` })
-      .click();
+    await page.getByRole("button", { name: `Лопнути кульку «${unit}»` }).click();
+  await expect(page.getByRole("button", { name: /Повернути.*кульк/ })).toHaveCount(0);
   await expect(page.locator(".clock-pop[aria-pressed=true]")).toHaveCount(0);
+  expect(await page.locator(".confetti-piece").evaluateAll(xs =>
+    xs.every(e => Number(getComputedStyle(e).opacity) === 0),
+  )).toBe(true);
 });
 test("reduced motion removes parallax and confetti, replay stays keyboard accessible", async ({
   page,

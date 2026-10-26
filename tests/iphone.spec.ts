@@ -12,7 +12,9 @@ test("iPhone WebKit: closing greeting stays connected and settles after touch re
     name: "Привітатися з іменинниками ще раз",
   });
   await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(4100);
+  await page.waitForTimeout(1950);
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
+  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
   await greeting.tap();
   await page.waitForTimeout(1950);
   await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
@@ -113,13 +115,15 @@ test("iPhone WebKit: touch balloons, mobile navigation and independent drafts", 
   await page.waitForTimeout(550);
   await expect(
     page
-      .getByRole("button", { name: "Повернути кульку «Годин»" })
+      .getByRole("button", { name: "Лопнути кульку «Годин»" })
       .locator(".balloon-remnant"),
   ).toBeVisible();
   await page.screenshot({
     path: "output/playwright/iphone-webkit-balloons.png",
   });
-  await page.getByRole("button", { name: "Повернути кульку «Годин»" }).tap();
+  await expect(page.locator(".clock-pop.is-popped")).toHaveCount(0);
+  await page.getByRole("button", { name: "Лопнути кульку «Годин»" }).tap();
+  await expect(page.locator(".clock-pop.is-popped")).toHaveCount(1);
   await expect(page.locator(".clock-pop.is-popped")).toHaveCount(0);
   for (const width of [320, 390, 430]) {
     await page.setViewportSize({ width, height: 844 });

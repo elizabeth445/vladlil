@@ -2,36 +2,40 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 for (const width of [390, 1512]) {
-  test(`hero names stay still through opening and replay at ${width}px`, async ({ page }) => {
+  test(`SplitText reveals names once and keeps them settled at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 742 });
-    await page.emulateMedia({ reducedMotion: "no-preference" });
     await page.goto("/");
     for (let replay = 0; replay < 2; replay++) {
       if (replay) await page.getByRole("button", { name: "Відкрити запрошення ще раз", exact: true }).click();
       const open = page.getByRole("button", { name: "Відкрити запрошення", exact: true });
       await expect(open).toBeEnabled({ timeout: 12000 });
-      await page.evaluate(() => document.fonts.ready);
-      const stability = page.evaluate(() => new Promise<{ drift: number; opacity: number }>((resolve) => {
-        const names = [...document.querySelectorAll<HTMLElement>(".hero-names > span")];
-        const initial = names.map(element => element.getBoundingClientRect());
-        const start = performance.now();
-        let drift = 0, opacity = 1;
-        const sample = () => {
-          names.forEach((element, index) => {
-            const box = element.getBoundingClientRect();
-            drift = Math.max(drift, Math.abs(box.top - initial[index].top), Math.abs(box.left - initial[index].left));
-            opacity = Math.min(opacity, Number(getComputedStyle(element).opacity));
-          });
-          if (performance.now() - start < 4000) requestAnimationFrame(sample);
-          else resolve({ drift, opacity });
-        };
-        sample();
-      }));
+      await page.evaluate(() => {
+        const counts = [0, 0];
+        (window as Window & { nameReveals?: number[] }).nameReveals = counts;
+        document.querySelectorAll(".hero-names > span").forEach((element, i) => {
+          new MutationObserver(records => {
+            for (const record of records) if (record.attributeName === "data-reveal-state" && record.oldValue !== "playing" && element.getAttribute("data-reveal-state") === "playing")
+              counts[i]++;
+          }).observe(element, { attributes: true, attributeOldValue: true, attributeFilter: ["data-reveal-state"] });
+        });
+      });
       await open.click();
-      const result = await stability;
-      expect(result.drift).toBeLessThan(0.75);
-      expect(result.opacity).toBe(1);
       await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(page.locator(".hero-names > span").first()).toHaveAttribute("data-reveal-state", "complete");
+      await expect(page.locator(".hero-names > span").last()).toHaveAttribute("data-reveal-state", "complete");
+      expect(await page.locator(".hero-names .split-char").count()).toBe(15);
+      const stability = await page.locator("#hero-title").evaluate(element => new Promise<number>(resolve => {
+        const chars = [...element.querySelectorAll(".split-char")];
+        const initial = chars.map(char => char.getBoundingClientRect());
+        let drift = 0;
+        const start = performance.now();
+        const sample = () => {
+          chars.forEach((char, i) => { const rect = char.getBoundingClientRect(); drift = Math.max(drift, Math.abs(rect.top - initial[i].top), Math.abs(rect.left - initial[i].left)); });
+          if (performance.now() - start < 1800) requestAnimationFrame(sample); else resolve(drift);
+        }; sample();
+      }));
+      expect(stability).toBeLessThan(0.75);
+      expect(await page.evaluate(() => (window as Window & { nameReveals?: number[] }).nameReveals)).toEqual([1, 1]);
       await expect(page.locator("#hero-title")).toBeFocused();
     }
   });
@@ -68,69 +72,57 @@ test("watercolor postcard responds to pointer and keyboard, settles and respects
   })).toBe(0);
 });
 
-test("closing greeting turns to the guest, waves gently, settles and replays", async ({
-  page,
-}) => {
+test("layered characters wave from a fixed shoulder, blink and pause offscreen", async ({ page }) => {
   await enter(page);
-  const greeting = page.getByRole("button", {
-    name: "Привітатися з іменинниками ще раз",
-  });
+  const greeting = page.getByRole("button", { name: "Привітатися з іменинниками ще раз" });
   await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1900);
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
-  await expect(greeting.locator(".greeting-toys")).toHaveCount(0);
-  await page.locator("#rsvp").scrollIntoViewIfNeeded();
-  await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1900);
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
-  await greeting.click();
-  await expect(greeting.locator(".greeting-pose-0").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  await page.waitForTimeout(1900);
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  expect(
-    await greeting
-      .locator(".greeting-paw-motion")
-      .first()
-      .evaluate((e) => {
-        return Math.abs(Number(e.getAttribute("scale")));
-      }),
-  ).toBeLessThanOrEqual(8.6);
-  await expect(greeting.locator(".greeting-pose-1").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
-    "opacity",
-    "0",
-  );
+  const lion = greeting.locator(".rig-lion");
+  await expect(lion).toHaveAttribute("data-wave-state", "waving");
+  await expect(lion).toHaveAttribute("data-wave-state", "idle");
+  await expect(greeting.locator("filter, mask, clipPath, .greeting-toys")).toHaveCount(0);
   await greeting.focus();
   await page.keyboard.press("Enter");
-  await expect(greeting.locator(".greeting-pose-0").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
+  const movement = await lion.evaluate(element => new Promise<{ angle: number; pivotDrift: number; canvasDrift: number }>(resolve => {
+    const joint = element.querySelector<HTMLElement>(".rig-wave-joint")!;
+    const parent = joint.parentElement!.getBoundingClientRect();
+    const root = element.getBoundingClientRect();
+    const origin = getComputedStyle(joint).transformOrigin.split(" ").map(parseFloat);
+    const expected = { x: parent.left + origin[0], y: parent.top + origin[1] };
+    let angle = 0, pivotDrift = 0, canvasDrift = 0;
+    const start = performance.now();
+    const sample = () => {
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(joint).transform);
+      // GSAP's CSS matrix preserves a rotation around the specified shoulder.
+      const point = new DOMPoint(0, 0).matrixTransform(matrix);
+      angle = Math.max(angle, Math.abs(Math.atan2(matrix.b, matrix.a) * 180 / Math.PI));
+      const now = joint.parentElement!.getBoundingClientRect();
+      pivotDrift = Math.max(pivotDrift, Math.hypot(now.left + origin[0] + point.x - expected.x, now.top + origin[1] + point.y - expected.y));
+      canvasDrift = Math.max(canvasDrift, Math.abs(element.getBoundingClientRect().top - root.top));
+      if (performance.now() - start < 2100) requestAnimationFrame(sample); else resolve({ angle, pivotDrift, canvasDrift });
+    }; sample();
+  }));
+  expect(movement.angle).toBeGreaterThan(2);
+  expect(movement.angle).toBeLessThanOrEqual(4.1);
+  expect(movement.pivotDrift).toBeLessThan(0.5);
+  expect(movement.canvasDrift).toBeLessThan(0.5);
+  expect(await lion.evaluate(element => new Promise<boolean>(resolve => {
+    const start = performance.now();
+    const sample = () => {
+      if (getComputedStyle(element.querySelector(".rig-eyes-closed")!).opacity === "1") resolve(true);
+      else if (performance.now() - start < 7500) requestAnimationFrame(sample);
+      else resolve(false);
+    }; sample();
+  }))).toBe(true);
+  await expect(lion.locator(".rig-eyes-closed")).toHaveCSS("opacity", "0");
+  await page.locator("#home").scrollIntoViewIfNeeded();
+  await expect(lion).toHaveAttribute("data-idle-running", "false");
+  await greeting.scrollIntoViewIfNeeded();
+  await expect(lion).toHaveAttribute("data-wave-state", "waving");
   await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(greeting.locator(".greeting-pose-1").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  await expect(greeting.locator(".greeting-pose-0").first()).toHaveCSS(
-    "opacity",
-    "0",
-  );
+  await expect(lion).toHaveAttribute("data-idle-running", "false");
   await greeting.click();
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
-    "opacity",
-    "0",
-  );
+  await expect(lion).toHaveAttribute("data-wave-state", "idle");
+  await expect(lion.locator(".rig-wave-joint")).toHaveCSS("transform", "none");
 });
 async function enter(page: import("@playwright/test").Page) {
   await page.goto("/");

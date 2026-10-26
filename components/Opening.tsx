@@ -63,17 +63,13 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
-        gsap.set(".opening-lion", { transformOrigin: "50% 96%" });
-        gsap.set(".opening-kitten", { transformOrigin: "50% 93%" });
         preview.current = gsap
           .timeline({
             paused: true,
             defaults: { duration: 0.4, ease: "sine.inOut" },
           })
           .to(".envelope", { y: -7, rotation: -1.2 }, 0)
-          .to(".envelope-seal", { scale: 1.08 }, 0)
-          .to(".opening-lion", { x: 10, rotation: 2 }, 0)
-          .to(".opening-kitten", { x: -10, rotation: -2 }, 0);
+          .to(".envelope-seal", { scale: 1.08 }, 0);
         return () => {
           preview.current = null;
         };
@@ -133,22 +129,6 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             ".envelope-letter",
             { rotation: -1.5, scale: 1.035, duration: 0.3, ease: "sine.out" },
             1.77,
-          )
-          .to(".opening-lion", { x: 16, rotation: 4, y: -6, duration: 0.6 }, 0.2)
-          .to(
-            ".opening-kitten",
-            { x: -16, rotation: -4, y: -6, duration: 0.6 },
-            0.3,
-          )
-          .to(
-            ".opening-lion, .opening-kitten",
-            {
-              x: 0,
-              rotation: 0,
-              y: 0,
-              duration: 0.65,
-            },
-            1.05,
           )
           .to(
             ".held-balloon-flight",

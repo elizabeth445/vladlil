@@ -32,29 +32,18 @@ test("iPhone WebKit: closing greeting stays connected and settles after touch re
     name: "Привітатися з іменинниками ще раз",
   });
   await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(1950);
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "1");
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS("opacity", "0");
+  const lion = greeting.locator(".rig-lion");
+  await expect(lion).toHaveAttribute("data-wave-state", "waving");
+  await expect(lion).toHaveAttribute("data-wave-state", "idle");
   await greeting.tap();
-  await page.waitForTimeout(1950);
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
-  await expect(greeting.locator("mask, clipPath")).toHaveCount(0);
-  await page.screenshot({
-    path: "output/playwright/iphone-webkit-greeting.png",
-  });
-  await expect(greeting.locator(".greeting-pose-1").first()).toHaveCSS(
-    "opacity",
-    "1",
-  );
+  await expect(lion).toHaveAttribute("data-wave-state", "waving");
+  await expect(greeting.locator("filter, mask, clipPath")).toHaveCount(0);
+  await page.screenshot({ path: "output/playwright/iphone-webkit-greeting.png" });
+  await expect(lion).toHaveAttribute("data-wave-state", "idle");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await greeting.tap();
-  await expect(greeting.locator(".greeting-pose-wave").first()).toHaveCSS(
-    "opacity",
-    "0",
-  );
+  await expect(lion).toHaveAttribute("data-wave-state", "idle");
+  await expect(lion.locator(".rig-wave-joint")).toHaveCSS("transform", "none");
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390,

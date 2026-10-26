@@ -147,6 +147,10 @@ export function CelebrationThread({ className = "" }: { className?: string }) {
         stroke="#cca0ad"
         strokeWidth=".9"
       />
+      <path d="m24 15 1.4 3.2 3.6.4-2.6 2.5.7 3.6-3.1-1.8-3.1 1.8.7-3.6-2.6-2.5 3.6-.4Z" fill="#e8cd98" />
+      <path d="m204 13 1.6 3.6 3.9.5-2.9 2.7.7 3.9-3.3-1.9-3.4 1.9.7-3.9-2.8-2.7 3.9-.5Z" fill="#e8cd98" />
+      <circle cx="116" cy="14" r="1.6" fill="#cca0ad" />
+      <circle cx="138" cy="27" r="1.3" fill="#92afbe" />
     </svg>
   );
 }

@@ -295,11 +295,11 @@ button:disabled {
 .hero-names:focus {
   outline: none;
 }
-.hero-names span:first-child {
+.hero-names > span:first-child {
   color: var(--blue);
   rotate: -2deg;
 }
-.hero-names span:last-child {
+.hero-names > span:last-child {
   color: var(--pink);
   rotate: 1deg;
 }
@@ -426,21 +426,6 @@ button:disabled {
 .butterfly {
   width: 50px;
   transform-origin: center;
-}
-.breathing {
-  animation: breathe 5.5s ease-in-out infinite alternate;
-}
-.breathing.kitten {
-  animation-delay: -2.5s;
-}
-@keyframes breathe {
-  0%,
-  30% {
-    transform: translateY(0) rotate(0);
-  }
-  100% {
-    transform: translateY(-5px) rotate(1deg);
-  }
 }
 .stories {
   padding-bottom: 55px;
@@ -1512,20 +1497,6 @@ button:disabled {
   position: relative;
   display: block;
   overflow: hidden;
-}
-.greeting-pose {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  pointer-events: none;
-}
-.greeting-pose-1 {
-  opacity: 1;
-}
-.greeting-kitten .greeting-pose-0 {
-  transform: scaleX(-1);
 }
 .celebration-thread {
   width: 190px;
@@ -2854,9 +2825,6 @@ button:disabled {
     animation: none !important;
     transition: none !important;
     scroll-behavior: auto !important;
-  }
-  .breathing {
-    transform: none !important;
   }
 }
 /* Refinement from the first mobile review: keep ornaments inside the page and improve reading size. */
@@ -4590,8 +4558,6 @@ button:disabled {
     margin-inline: auto;
     margin-top: 40px;
   }
-  .closing-greeting .greeting-lion { translate: 2.5% 0; }
-  .closing-greeting .greeting-kitten { translate: -8% 3.75%; }
   .closing .closing-date {
     font-size: 15px;
     gap: 8px;
@@ -4827,9 +4793,6 @@ button:disabled {
 .opening-button {
   z-index: 3;
   margin-top: 0;
-}
-.greeting-kitten {
-  translate: 0 3.75%;
 }
 .closing-greeting > .greeting-character {
   z-index: 1;
@@ -5400,4 +5363,66 @@ button:disabled {
   .clock-balloon .balloon-body > span:not(.balloon-glint) {
     font-size: clamp(11px, 3.1vw, 13px);
   }
+}
+
+/* Articulated watercolor hosts: overlap hides the shoulder and neck seams. */
+.character-rig { display: block; position: relative; width: 100%; aspect-ratio: 1; isolation: isolate; pointer-events: none; }
+.rig-part { position: absolute; display: block; }
+.rig-part > span, .rig-part > span > span { display: block; position: relative; width: 100%; height: 100%; }
+.rig-part img { display: block; width: 100%; height: 100%; object-fit: fill; user-select: none; }
+.rig-body { left: 24%; top: 54%; width: 56%; height: 42%; z-index: 2; }
+.rig-body-idle { transform-origin: 50% 100%; }
+.rig-head { left: 24%; top: 3%; width: 63%; height: 65%; z-index: 5; }
+.rig-head-idle, .rig-head-gesture { transform-origin: 50% 85%; }
+.rig-head img { position: absolute; inset: 0; }
+.rig-eyes-closed { opacity: 0; }
+.rig-rest { left: 44%; top: 65%; width: 16%; height: 31%; z-index: 4; }
+.rig-wave { left: 10%; top: 40%; width: 26%; height: 34%; z-index: 3; }
+.rig-wave-joint { transform-origin: 70% 90%; }
+.rig-wave img { transform: scaleX(-1); }
+.rig-tail { left: 5%; top: 58%; width: 23%; height: 36%; transform-origin: 80% 90%; z-index: 1; }
+.rig-kitten .rig-body { left: 21%; top: 55%; width: 59%; height: 41%; }
+.rig-kitten .rig-head { left: 15%; top: 9%; width: 69%; height: 57%; }
+.rig-kitten .rig-rest { left: 37%; }
+.rig-kitten .rig-wave { left: 65%; top: 41%; width: 24%; height: 33%; }
+.rig-kitten .rig-wave-joint { transform-origin: 30% 90%; }
+.rig-kitten .rig-tail { left: 74%; top: 60%; width: 23%; height: 33%; transform-origin: 15% 90%; }
+.closing-greeting > .greeting-character { width: 50%; overflow: visible; translate: none; }
+.character-reaction > .character-rig { width: 100%; }
+@media (max-width: 767px) {
+  .celebration-thread { width: min(80vw, 330px); }
+  .closing-greeting .greeting-lion, .closing-greeting .greeting-kitten { translate: none; }
+  .opening { padding-top: max(74px, calc(env(safe-area-inset-top) + 58px)); }
+  .opening-caption { margin-top: clamp(0px, 2svh, 20px); }
+  .opening-caption p { font-size: clamp(26px, 6.9vw, 32px); line-height: 1.3; margin-bottom: 14px; }
+  .opening-caption > .opening-dedication:last-child { font-size: clamp(18px, 5vw, 23px); line-height: 1.4; }
+  .opening-caption .little-hearts { margin-bottom: 14px; }
+  .opening-caption .little-hearts svg { width: 30px; height: 30px; }
+  .opening-scene { --envelope-width: min(82vw, 360px); height: clamp(285px, 40svh, 355px); margin-block: 10px 20px; }
+  .opening-scene .opening-character-backdrop { --lion-size: min(52vw, 245px); }
+  .opening-character-backdrop .opening-lion { left: 0; }
+  .opening-character-backdrop .opening-kitten { right: 0; }
+  .opening-scene .envelope-seal { width: 42px; height: 42px; left: calc(50% - 21px); }
+  .opening-scene .envelope-seal svg { width: 21px; }
+  .opening-character-backdrop .held-bouquet { --bouquet-width: 76%; }
+  .opening-button { width: min(100%, 360px); min-height: 58px; font-size: clamp(16px, 4.4vw, 19px); }
+  .opening-button > svg { width: 22px; height: 22px; }
+  .opening-footnote { max-width: 340px; font-size: 16px; margin: 16px auto 0; }
+}
+@media (max-width: 767px) and (max-height: 700px) {
+  .opening { padding-top: 66px; }
+  .opening-caption { margin-top: 0; }
+  .opening-caption p { font-size: clamp(24px, 6.5vw, 29px); }
+  .opening-caption .little-hearts { margin-bottom: 9px; }
+  .opening-scene { height: clamp(250px, 39svh, 280px); margin-block: 8px 14px; }
+  .opening-footnote { margin-top: 12px; font-size: 15px; }
+}
+
+.hero-names .split-char { color: inherit; rotate: none; }
+.hero-names .split-parent { display: block; white-space: nowrap; }
+
+@media (max-width: 360px) and (max-height: 650px) {
+  .opening-caption .little-hearts { display: none; }
+  .opening-scene { height: 230px; }
+  .opening-footnote { font-size: 14px; margin-top: 10px; }
 }

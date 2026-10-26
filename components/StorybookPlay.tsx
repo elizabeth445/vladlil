@@ -3,7 +3,8 @@ import { useEffect, useId, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Heart } from "lucide-react";
-import { Butterfly, Character, Star } from "./Artwork";
+import { Butterfly, Star } from "./Artwork";
+import LayeredCharacter, { type CharacterHandle } from "./LayeredCharacter";
 gsap.registerPlugin(useGSAP);
 
 function useMotionPreference(
@@ -29,6 +30,7 @@ export function PlayfulCharacter({
   const root = useRef<HTMLButtonElement>(null);
   const animation = useRef<gsap.core.Timeline | null>(null);
   const messageId = useId();
+  const character = useRef<CharacterHandle>(null);
   const { contextSafe } = useGSAP({ scope: root });
   useMotionPreference(animation);
   const greet = () =>
@@ -37,7 +39,7 @@ export function PlayfulCharacter({
       const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
       const timeline = gsap.timeline();
       animation.current = timeline;
-      gsap.set(".character-reaction", { x: 0, y: 0, rotation: 0, scale: 1 });
+      character.current?.wave();
       gsap.set(".greeting-spark", { x: 0, y: 0, opacity: 0, scale: 0.5 });
       timeline.fromTo(
         ".character-greeting",
@@ -47,33 +49,6 @@ export function PlayfulCharacter({
       );
       if (!reduced) {
         timeline
-          .to(
-            ".character-reaction",
-            {
-              y: kind === "lion" ? -16 : -5,
-              rotation: kind === "lion" ? -4 : 7,
-              scale: kind === "lion" ? 1.02 : 1.035,
-              duration: 0.28,
-              ease: "power2.out",
-            },
-            0,
-          )
-          .to(
-            ".character-reaction",
-            {
-              y: 0,
-              rotation: kind === "lion" ? 3 : -3,
-              scale: 1,
-              duration: 0.32,
-              ease: "sine.inOut",
-            },
-            0.28,
-          )
-          .to(
-            ".character-reaction",
-            { rotation: 0, duration: 0.35, ease: "sine.out" },
-            0.6,
-          )
           .to(
             ".greeting-spark",
             {
@@ -115,7 +90,7 @@ export function PlayfulCharacter({
       </span>
       <span className="character-halo" aria-hidden="true" />
       <span className="character-reaction">
-        <Character kind={kind} className="breathing" priority={priority} />
+        <LayeredCharacter ref={character} kind={kind} priority={priority} />
       </span>
       <span className="greeting-sparks" aria-hidden="true">
         {Array.from({ length: 5 }, (_, i) => (

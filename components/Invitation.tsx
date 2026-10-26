@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { EVENT } from "@/lib/event";
 import Opening from "./Opening";
+import SplitText from "./SplitText";
 import { PlayfulCharacter, PlayfulButterfly } from "./StorybookPlay";
 import {
   Balloon,
@@ -208,9 +209,9 @@ export default function Invitation() {
             <div className="hero-copy">
               <p className="hero-invitation">Запрошуємо на день народження</p>
               <h1 id="hero-title" tabIndex={-1} className="hero-names">
-                <span>Владислава</span>
+                <SplitText text="Владислава" active={!opening} />
                 <small>та</small>
-                <span>Лілії</span>
+                <SplitText text="Лілії" active={!opening} delay={45} />
               </h1>
               <div className="age-note">
                 <span className="age-line" />
@@ -280,7 +281,7 @@ export default function Invitation() {
             <article className="child-story story-blue">
               <div className="story-illustration">
                 <div className="watercolor-wash" />
-                <Character kind="lion" className="breathing" />
+                <Character kind="lion" />
                 <Star className="story-star" />
                 <Balloon className="story-balloon" />
                 <PartyArtwork kind="gift" color="blue" className="story-gift" />
@@ -301,7 +302,7 @@ export default function Invitation() {
             <article className="child-story story-pink">
               <div className="story-illustration">
                 <div className="watercolor-wash" />
-                <Character kind="kitten" className="breathing" />
+                <Character kind="kitten" />
                 <PlayfulButterfly className="story-butterfly" />
                 <PartyArtwork kind="gift" color="pink" className="story-gift" />
               </div>

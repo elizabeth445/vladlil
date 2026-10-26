@@ -3081,9 +3081,10 @@ button:disabled {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  border: 1px solid #adc9d6;
-  background: #e4eff3;
+  border: 1px solid #d8c8d0;
+  background: linear-gradient(145deg, #fffdf8, #f3e9ee 55%, #e2eef4);
   color: #41677e;
+  box-shadow: inset 0 1px 1px #ffffffd9;
   transition: background 180ms, transform 180ms, box-shadow 180ms;
 }
 .music-toggle[aria-pressed="false"] {
@@ -3092,6 +3093,8 @@ button:disabled {
   border-color: #d4c7b7;
 }
 .music-toggle { position: relative; }
+.music-note { filter: drop-shadow(0 1px 1px #a27c9729); }
+.music-toggle[aria-pressed="false"] .music-note { opacity: .55; }
 .music-muted-slash {
   position: absolute;
   width: 27px;
@@ -3109,15 +3112,18 @@ button:disabled {
 .music-toggle:active { transform: scale(.95); }
 .music-dock {
   position: fixed;
-  left: max(20px, env(safe-area-inset-left));
+  right: max(20px, env(safe-area-inset-right));
   bottom: max(20px, calc(env(safe-area-inset-bottom) + 12px));
   z-index: 80;
   border-radius: 50%;
   box-shadow: 0 4px 18px #593c351a;
 }
+:root[data-feedback-tools="true"] .music-dock {
+  bottom: max(88px, calc(env(safe-area-inset-bottom) + 80px));
+}
 @media (hover: hover) {
   .music-toggle:hover {
-    background: #d8e8ef;
+    background: #f4e7ed;
     box-shadow: 0 3px 12px #365b7214;
   }
 }

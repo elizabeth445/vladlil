@@ -26,6 +26,13 @@ test("music starts with opening the invitation, pauses and remembers the choice"
     const box = await page.getByRole("button", { name: "Вимкнути музику", exact: true }).boundingBox();
     expect(box!.width).toBeGreaterThanOrEqual(44);
     expect(box!.x + box!.width).toBeLessThanOrEqual(width);
+    expect(box!.x).toBeGreaterThan(width / 2);
+    expect(width - box!.x - box!.width).toBe(20);
+    const toolbar = page.locator("[data-agentation-toolbar]");
+    if (await toolbar.count()) {
+      const toolbarBox = await toolbar.boundingBox();
+      expect(box!.y + box!.height).toBeLessThan(toolbarBox!.y);
+    }
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
 });

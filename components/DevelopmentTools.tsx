@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 const Agentation = dynamic(
   () => import("agentation").then((module) => module.Agentation),
@@ -22,6 +22,11 @@ function isEnabled() {
 
 export default function DevelopmentTools() {
   const enabled = useSyncExternalStore(subscribe, isEnabled, () => false);
+  useEffect(() => {
+    if (!enabled) return;
+    document.documentElement.dataset.feedbackTools = "true";
+    return () => { delete document.documentElement.dataset.feedbackTools; };
+  }, [enabled]);
   if (!enabled) return null;
 
   return (

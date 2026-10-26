@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useSyncExternalStore } from "react";
-import { Mic, MicOff } from "lucide-react";
+import { Music2 } from "lucide-react";
 
 const PREFERENCE = "invitation-music-muted";
 const CHANGE_EVENT = "invitation-music-change";
@@ -44,7 +44,7 @@ export function useBackgroundMusic() {
     if (!audio) return;
     audio.volume = 0.35;
     void audio.play().catch((error: unknown) => {
-      if (!(error instanceof DOMException) || error.name !== "AbortError") {
+      if (!(error instanceof DOMException) || !["AbortError", "NotAllowedError"].includes(error.name)) {
         setMuted(true);
       }
     });
@@ -93,7 +93,8 @@ export function MusicToggle({
       aria-pressed={!muted}
       onClick={onToggle}
     >
-      {muted ? <MicOff size={21} aria-hidden="true" /> : <Mic size={21} aria-hidden="true" />}
+      <Music2 size={22} aria-hidden="true" />
+      {muted ? <span className="music-muted-slash" aria-hidden="true" /> : null}
     </button>
   );
 }

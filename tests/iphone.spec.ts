@@ -5,6 +5,9 @@ test("iPhone WebKit: invitation gesture starts music and touch control pauses it
   await page.goto("/");
   const audio = page.locator("audio");
   expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.locator(".opening-caption").tap();
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).tap();
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.currentTime)).toBeGreaterThan(0);
   await page.getByRole("button", { name: "Вимкнути музику", exact: true }).tap();

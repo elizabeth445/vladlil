@@ -3091,6 +3091,17 @@ button:disabled {
   color: #88796d;
   border-color: #d4c7b7;
 }
+.music-toggle { position: relative; }
+.music-muted-slash {
+  position: absolute;
+  width: 27px;
+  height: 2px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+  box-shadow: 0 0 0 2px var(--paper);
+  pointer-events: none;
+}
 .music-toggle:focus-visible {
   outline: 2px solid var(--blue);
   outline-offset: 4px;
@@ -5291,8 +5302,9 @@ button:disabled {
 }
 @media (max-width: 767px) {
   .opening-scene {
-    --envelope-width: clamp(190px, 58vw, 260px);
+    --envelope-width: clamp(220px, 70vw, 320px);
     --envelope-height: calc(var(--envelope-width) * 0.645);
+    height: clamp(250px, 39svh, 330px);
     isolation: isolate;
     z-index: 1;
   }
@@ -5301,11 +5313,19 @@ button:disabled {
     --envelope-height: inherit;
   }
   .opening-scene .opening-character-backdrop {
+    --lion-size: min(46vw, 220px);
     --seat-bottom: calc(50% - var(--envelope-height) / 2 - 12px);
     z-index: 4;
   }
   .opening-character-backdrop .opening-lion { left: 4px; }
   .opening-character-backdrop .opening-kitten { right: 4px; }
+  .opening-caption p { font-size: clamp(24px, 6vw, 29px); }
+  .opening-caption > .opening-dedication:last-child { font-size: clamp(18px, 4.9vw, 21px); }
+  .opening-caption .little-hearts svg { width: 27px; height: 27px; }
+  .opening-footnote { font-size: 16px; }
+  .opening-stage .spark-a { width: 26px; }
+  .opening-stage .spark-b { width: 18px; }
+  .opening-character-backdrop > .spark-c { width: 30px; }
   .header-actions > button { min-width: 44px; min-height: 44px; }
   .venue-image > img { height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
   .venue-copy > .button { width: 100%; justify-content: center; }
@@ -5313,6 +5333,10 @@ button:disabled {
   .letter-bottom .button { max-width: 100%; white-space: normal; }
   .question textarea::placeholder { font-size: 16px; }
   .calendar-day > button { min-width: 40px; min-height: 40px; }
+}
+@media (max-width: 767px) and (max-height: 700px) {
+  .opening-scene { height: clamp(218px, 35svh, 250px); }
+  .opening-caption .little-hearts { display: flex; }
 }
 
 /* Each bouquet shares its host's coordinate system, so the threads meet a paw. */

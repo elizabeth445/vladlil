@@ -1,12 +1,15 @@
 import { test, expect } from "@playwright/test";
 
-test("background music starts with the invitation, pauses and remembers the choice", async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: "reduce" });
+test("music starts with opening the invitation, pauses and remembers the choice", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "no-preference" });
   await page.goto("/");
   const audio = page.locator("audio");
   expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.locator(".opening-caption").click();
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
   await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).click();
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.currentTime)).toBeGreaterThan(0);
+  await expect(page.getByRole("dialog")).toBeVisible();
   expect(await audio.evaluate((element: HTMLAudioElement) => element.loop)).toBe(true);
   await page.getByRole("button", { name: "Вимкнути музику", exact: true }).click();
   expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
@@ -25,4 +28,11 @@ test("background music starts with the invitation, pauses and remembers the choi
     expect(box!.x + box!.width).toBeLessThanOrEqual(width);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
   }
+});
+
+test("skipping the envelope leaves music off until the note is pressed", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Пропустити", exact: true }).click();
+  expect(await page.locator("audio").evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
 });

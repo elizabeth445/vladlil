@@ -182,7 +182,6 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
       }
     })();
   const skip = () => {
-    onOpenStart();
     sequence.current?.kill();
     complete();
   };

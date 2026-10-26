@@ -1,6 +1,42 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
+for (const width of [390, 1512]) {
+  test(`hero names stay still through opening and replay at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 742 });
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.goto("/");
+    for (let replay = 0; replay < 2; replay++) {
+      if (replay) await page.getByRole("button", { name: "Відкрити запрошення ще раз", exact: true }).click();
+      const open = page.getByRole("button", { name: "Відкрити запрошення", exact: true });
+      await expect(open).toBeEnabled({ timeout: 12000 });
+      await page.evaluate(() => document.fonts.ready);
+      const stability = page.evaluate(() => new Promise<{ drift: number; opacity: number }>((resolve) => {
+        const names = [...document.querySelectorAll<HTMLElement>(".hero-names > span")];
+        const initial = names.map(element => element.getBoundingClientRect());
+        const start = performance.now();
+        let drift = 0, opacity = 1;
+        const sample = () => {
+          names.forEach((element, index) => {
+            const box = element.getBoundingClientRect();
+            drift = Math.max(drift, Math.abs(box.top - initial[index].top), Math.abs(box.left - initial[index].left));
+            opacity = Math.min(opacity, Number(getComputedStyle(element).opacity));
+          });
+          if (performance.now() - start < 4000) requestAnimationFrame(sample);
+          else resolve({ drift, opacity });
+        };
+        sample();
+      }));
+      await open.click();
+      const result = await stability;
+      expect(result.drift).toBeLessThan(0.75);
+      expect(result.opacity).toBe(1);
+      await expect(page.getByRole("dialog")).toHaveCount(0);
+      await expect(page.locator("#hero-title")).toBeFocused();
+    }
+  });
+}
+
 test("watercolor postcard responds to pointer and keyboard, settles and respects reduced motion", async ({ page }) => {
   await enter(page);
   const photo = page.getByRole("button", {

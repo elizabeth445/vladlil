@@ -95,15 +95,6 @@ export default function Invitation() {
             0,
           )
           .to(".hero-spark-depth", { y: mobile ? -95 : -170 }, 0);
-        gsap.from(".hero-names span", {
-          y: 22,
-          rotation: 2,
-          opacity: 0,
-          stagger: 0.15,
-          duration: 0.8,
-          ease: "power2.out",
-          clearProps: "all",
-        });
         gsap.from(".story-blue .story-illustration", {
           x: 20,
           rotation: -3,

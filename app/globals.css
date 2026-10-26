@@ -4301,12 +4301,11 @@ button:disabled {
 }
 .arrival-balloon-flight {
   position: absolute;
-  top: 0;
+  top: var(--desktop-top);
   left: var(--desktop-left);
   margin-left: calc(var(--balloon-width) / -2);
   width: var(--balloon-width);
-  aspect-ratio: 4 / 9;
-  transform: translateY(110vh);
+  aspect-ratio: 707 / 1000;
 }
 .arrival-balloon-sway {
   position: relative;
@@ -4314,30 +4313,14 @@ button:disabled {
   height: 100%;
   transform-origin: 50% 24%;
 }
-.pearl-balloon-head,
-.pearl-balloon-tail {
-  display: block;
-  position: absolute;
-  inset: 0;
-  background-image: url("/art/arrival-balloons.webp");
-  background-size: 300% 200%;
-  background-position: inherit;
-  background-repeat: no-repeat;
-}
-.pearl-balloon-head {
-  clip-path: inset(0 0 57% 0);
-}
-.pearl-balloon-tail {
-  clip-path: inset(42% 0 0 0);
-  transform-origin: 50% 43%;
-}
 @media (max-width: 767px) {
   .arrival-balloon-flight {
+    top: var(--mobile-top);
     left: var(--mobile-left);
     width: calc(var(--balloon-width) * 0.63);
     margin-left: calc(var(--balloon-width) * -0.315);
   }
-  .arrival-balloon-flight:nth-child(n + 25) {
+  .arrival-balloon-flight:nth-child(n + 29) {
     display: none;
   }
 }
@@ -4624,11 +4607,55 @@ button:disabled {
 
 .pearl-balloon {
   position: relative;
-  aspect-ratio: 4 / 9;
+  aspect-ratio: 707 / 1000;
 }
-.pearl-balloon-art {
+.pearl-balloon > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.party-art {
+  display: block;
+  flex-shrink: 0;
+  width: 150px;
+  aspect-ratio: 1;
+  pointer-events: none;
+}
+.party-art > img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.story-illustration .story-gift {
   position: absolute;
-  inset: 0;
+  width: 34%;
+  left: -8%;
+  bottom: -3%;
+  z-index: 2;
+  rotate: -7deg;
+}
+.story-pink .story-gift {
+  left: auto;
+  right: -8%;
+  rotate: 7deg;
+}
+.birthday-treats {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: clamp(32px, 7vw, 100px);
+  margin: 24px auto 0;
+  width: fit-content;
+  max-width: 100%;
+}
+.birthday-treats .party-art { width: clamp(105px, 12vw, 160px); }
+@media (max-width: 767px) {
+  .story-illustration .story-gift { left: -2%; width: 31%; }
+  .story-pink .story-gift { left: auto; right: -2%; }
+  .birthday-treats { margin-top: 18px; }
+  .birthday-treats .party-art { width: clamp(94px, 27vw, 115px); }
 }
 .opening {
   justify-content: center;
@@ -4771,7 +4798,7 @@ button:disabled {
   z-index: 3;
   margin-top: 0;
 }
-.opening-character-backdrop .opening-balloon {
+.opening-balloon-backdrop .opening-balloon {
   position: absolute;
   width: clamp(95px, 8vw, 135px);
 }
@@ -4925,7 +4952,7 @@ button:disabled {
     height: 48px;
     left: calc(50% - 24px);
   }
-  .opening-character-backdrop .opening-balloon {
+  .opening-balloon-backdrop .opening-balloon {
     width: 76px;
   }
   .opening-balloon-0 {
@@ -5225,3 +5252,138 @@ button:disabled {
 }
 .rsvp-form > .draft-note { margin-bottom: 24px; }
 .draft-note:empty { display: none; }
+
+/* Keep the invitation and its hosts in one scene on compact screens. */
+.opening-scene { display: contents; }
+.opening-balloon-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+.opening:focus { outline: none; }
+@media (max-width: 1100px), (max-height: 500px) {
+  .opening {
+    padding: max(76px, calc(env(safe-area-inset-top) + 56px)) 16px max(24px, env(safe-area-inset-bottom));
+    justify-content: flex-start;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+  .opening > .skip {
+    top: max(14px, env(safe-area-inset-top));
+    right: max(16px, env(safe-area-inset-right));
+    min-height: 44px;
+  }
+  .opening-caption {
+    width: 100%;
+    max-width: 440px;
+    margin-top: auto;
+    flex-shrink: 0;
+  }
+  .opening-caption p {
+    font-size: clamp(22px, 5.8vw, 27px);
+    line-height: 1.35;
+    letter-spacing: -0.5px;
+    margin-bottom: 10px;
+  }
+  .opening-caption > .opening-dedication:last-child {
+    display: block;
+    font-size: clamp(16px, 4.65vw, 19px);
+    line-height: 1.5;
+    white-space: normal;
+    letter-spacing: 0;
+  }
+  .opening-caption .little-hearts { margin-bottom: 12px; }
+  .opening-scene {
+    display: block;
+    position: relative;
+    width: min(100%, 480px);
+    height: clamp(220px, 36svh, 300px);
+    margin-block: 12px 18px;
+    flex-shrink: 0;
+  }
+  .opening-scene .opening-character-backdrop {
+    --lion-size: min(38vw, 190px);
+    --seat-bottom: calc(50% - var(--lion-size) * 0.38);
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    overflow: visible;
+  }
+  .opening-character-backdrop .opening-lion { left: -16px; }
+  .opening-character-backdrop .opening-kitten {
+    --character-size: calc(var(--lion-size) * 0.85);
+    right: -16px;
+  }
+  .opening-scene .opening-stage {
+    --envelope-width: clamp(140px, 44vw, 210px);
+    --envelope-height: calc(var(--envelope-width) * 0.645);
+    --letter-height: 148px;
+    --letter-top: 8px;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    margin: 0;
+    z-index: 3;
+  }
+  .opening-scene .envelope {
+    bottom: calc(50% - var(--envelope-height) / 2 - 5px);
+    left: calc(50% - var(--envelope-width) / 2);
+    width: var(--envelope-width);
+    height: var(--envelope-height);
+  }
+  .opening-scene .envelope-letter { padding: 12px 8px; }
+  .opening-scene .envelope-letter span { font-size: clamp(18px, 5.2vw, 24px); }
+  .opening-scene .envelope-letter .envelope-invitation { font-size: 11px; margin-bottom: 7px; }
+  .opening-scene .envelope-letter .envelope-conjunction { font-size: 0.65em; }
+  .opening-scene .envelope-letter small:last-child { font-size: 13px; margin-top: 8px; }
+  .opening-scene .envelope-seal { width: 36px; height: 36px; left: calc(50% - 18px); }
+  .opening-scene .envelope-seal svg { width: 17px; }
+  .opening-stage .spark-a { top: 12%; left: 43%; width: 20px; }
+  .opening-stage .spark-b { top: 21%; right: 35%; width: 14px; }
+  .opening-character-backdrop > .spark-c { top: auto; bottom: 13%; right: 12%; width: 25px; }
+  .opening-button {
+    width: min(100%, 320px);
+    min-width: 0;
+    min-height: 52px;
+    margin: 0;
+    flex-shrink: 0;
+  }
+  .opening-footnote {
+    max-width: 310px;
+    margin: 16px auto auto;
+    padding: 0;
+    font-size: 15px;
+    line-height: 1.6;
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 767px) and (max-height: 700px) {
+  .opening { padding-top: 68px; padding-bottom: 20px; }
+  .opening-scene { height: clamp(180px, 33svh, 230px); margin-block: 8px 14px; }
+  .opening-caption .little-hearts { display: none; }
+}
+@media (max-width: 767px) {
+  .header-actions > button { min-width: 44px; min-height: 44px; }
+  .venue-image > img { height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+  .venue-copy > .button { width: 100%; justify-content: center; }
+  .venue-copy > .text-link { min-height: 44px; margin: 14px 0 0; }
+  .letter-bottom .button { max-width: 100%; white-space: normal; }
+  .question textarea::placeholder { font-size: 16px; }
+  .calendar-day > button { min-width: 40px; min-height: 40px; }
+}
+
+@media (max-width: 767px) {
+  .hero {
+    height: auto;
+    min-height: calc(100svh - 80px);
+    max-height: none;
+    padding-bottom: 260px;
+  }
+  .clock-balloon .balloon-body > span:not(.balloon-glint) {
+    font-size: clamp(11px, 3.1vw, 13px);
+  }
+}

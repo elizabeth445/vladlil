@@ -151,21 +151,28 @@ export function CelebrationThread({ className = "" }: { className?: string }) {
 export function PearlBalloon({
   color = 0,
   className = "",
+  priority = false,
 }: {
   color?: number;
   className?: string;
+  priority?: boolean;
+}) {
+  const hues = [0, 220, 60, 140, 295, 30];
+  return (
+    <div className={`pearl-balloon ${className}`} aria-hidden="true" style={{ filter: `hue-rotate(${hues[color % hues.length]}deg)` }}>
+      <Image src="/art/ribbon-balloon-pink.webp" alt="" width={707} height={1000} priority={priority} sizes="(max-width: 767px) 290px, 440px" />
+    </div>
+  );
+}
+
+export function PartyArtwork({ kind, color, className = "" }: {
+  kind: "gift" | "cake";
+  color: "pink" | "blue";
+  className?: string;
 }) {
   return (
-    <div className={`pearl-balloon ${className}`} aria-hidden="true">
-      <div
-        className="pearl-balloon-art"
-        style={{
-          backgroundPosition: `${(color % 3) * 50}% ${color < 3 ? 0 : 100}%`,
-        }}
-      >
-        <span className="pearl-balloon-head" />
-        <span className="pearl-balloon-tail" />
-      </div>
-    </div>
+    <span className={`party-art party-${kind} ${className}`} aria-hidden="true">
+      <Image src={`/art/party-${kind}-${color}.webp`} alt="" width={640} height={640} sizes="(max-width: 767px) 110px, 180px" />
+    </span>
   );
 }

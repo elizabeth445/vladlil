@@ -12,11 +12,12 @@ function sample(index: number, salt: number) {
   return ((value ^ (value >>> 16)) >>> 0) / 4294967296;
 }
 const fraction = (value: number) => value - Math.floor(value);
-const balloons = Array.from({ length: 40 }, (_, i) => ({
+const balloons = Array.from({ length: 48 }, (_, i) => ({
   desktopLeft: fraction(0.5 + i * 0.754877666) * 108 - 4,
   mobileLeft: fraction(0.23 + i * 0.618033989) * 114 - 7,
-  depth: fraction(0.5 + i * 0.569840291),
-  size: Math.round(270 + sample(i, 1) * 130),
+  desktopTop: fraction(0.5 + i * 0.569840291) * 106 - 18,
+  mobileTop: fraction(0.16 + i * 0.414213562) * 110 - 18,
+  size: Math.round(290 + sample(i, 1) * 150),
   color: Math.floor(sample(i, 2) * 6),
 }));
 
@@ -40,66 +41,65 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
             ".arrival-balloon-flight",
             root.current!,
           );
-          const timeline = gsap.timeline({ onComplete: () => ready.current() });
+          const timeline = gsap.timeline({ paused: true, onComplete: () => ready.current() });
           const height = window.innerHeight;
           const width = window.innerWidth;
           const mobile = width < 768;
           flights
-            .filter((_, i) => !mobile || i < 24)
+            .filter((_, i) => !mobile || i < 28)
             .forEach((flight, i) => {
               const balloon = balloons[i];
-              const offset = sample(i, 3) * 0.4;
               const drift = (sample(i, 4) - 0.5) * 2;
-              const restingX = drift * width * 0.035;
               const left = mobile ? balloon.mobileLeft : balloon.desktopLeft;
-              const direction = left < 25 ? -1 : left > 75 ? 1 : drift;
-              timeline.fromTo(
-                flight,
-                { y: height + 80 + sample(i, 5) * 180, x: -drift * width * 0.12 },
-                {
-                  y: -100 + balloon.depth * (height + 50),
-                  x: restingX,
-                  duration: 0.8 + sample(i, 6) * 0.4,
-                  ease: "power2.out",
-                },
-                offset,
-              );
+              const top = mobile ? balloon.mobileTop : balloon.desktopTop;
+              const direction = sample(i, 7);
+              const sideways = direction < 0.42;
+              const exitsLeft = direction < 0.21;
+              const endX = sideways
+                ? exitsLeft
+                  ? -left / 100 * width - flight.offsetWidth - 80
+                  : (1 - left / 100) * width + flight.offsetWidth + 80
+                : drift * width * (0.18 + sample(i, 8) * 0.45);
+              const endY = sideways
+                ? drift * height * 0.55
+                : -top / 100 * height - flight.offsetHeight - 100;
+              // The CSS positions are visible before hydration; only the departure animates.
               timeline.to(
                 flight,
                 {
-                  y: () => -flight.offsetHeight - 120 - sample(i, 7) * height * 0.2,
-                  x: restingX + direction * width * (0.16 + sample(i, 8) * 0.35),
-                  duration: 1.45 + sample(i, 9) * 0.85,
-                  ease: "sine.in",
+                  x: endX,
+                  y: endY,
+                  rotation: drift * (sideways ? 26 : 12),
+                  duration: 1.8 + sample(i, 9) * 1.05,
+                  ease: "power1.inOut",
                 },
-                1.7 + sample(i, 10) * 0.3,
+                0.4 + sample(i, 10) * 0.8,
               );
               timeline.fromTo(
                 flight.querySelector(".arrival-balloon-sway"),
                 { rotation: -drift * 10 },
                 {
                   rotation: drift * 12,
-                  duration: 0.65 + sample(i, 11) * 0.3,
-                  repeat: 3,
+                  duration: 0.9 + sample(i, 11) * 0.3,
+                  repeat: 2,
                   yoyo: true,
                   ease: "sine.inOut",
                 },
-                offset,
-              );
-              timeline.fromTo(
-                flight.querySelector(".pearl-balloon-tail"),
-                { rotation: drift * 4 },
-                {
-                  rotation: -drift * 5,
-                  duration: 0.55 + sample(i, 12) * 0.2,
-                  repeat: 4,
-                  yoyo: true,
-                  ease: "sine.inOut",
-                },
-                offset + 0.1,
+                0,
               );
             });
           timeline.to(root.current, { autoAlpha: 0, duration: 0.45 }, 4.15);
+          const artwork = root.current?.querySelector("img");
+          const start = () => timeline.play();
+          if (!artwork || artwork.complete) start();
+          else {
+            artwork.addEventListener("load", start, { once: true });
+            artwork.addEventListener("error", start, { once: true });
+          }
+          return () => {
+            artwork?.removeEventListener("load", start);
+            artwork?.removeEventListener("error", start);
+          };
         },
       );
       return () => mm.revert();
@@ -110,7 +110,7 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
   return (
     <div ref={root} className="opening-arrival" aria-hidden="true">
       <div className="arrival-balloon-field">
-        {balloons.map(({ desktopLeft, mobileLeft, size, color }, i) => (
+        {balloons.map(({ desktopLeft, mobileLeft, desktopTop, mobileTop, size, color }, i) => (
           <div
             key={i}
             className="arrival-balloon-flight"
@@ -118,12 +118,14 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
               {
                 "--desktop-left": `${desktopLeft}%`,
                 "--mobile-left": `${mobileLeft}%`,
+                "--desktop-top": `${desktopTop}%`,
+                "--mobile-top": `${mobileTop}%`,
                 "--balloon-width": `${size}px`,
                 zIndex: size,
               } as CSSProperties
             }
           >
-            <PearlBalloon className="arrival-balloon-sway" color={color} />
+            <PearlBalloon className="arrival-balloon-sway" color={color} priority={i === 0} />
           </div>
         ))}
       </div>

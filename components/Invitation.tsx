@@ -22,6 +22,7 @@ import {
   Ribbon,
   Star,
   CelebrationThread,
+  PartyArtwork,
 } from "./Artwork";
 import Countdown from "./Countdown";
 import Calendar from "./Calendar";
@@ -31,15 +32,11 @@ import ClosingGreeting from "./ClosingGreeting";
 import VenueSection from "./VenueSection";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 export default function Invitation() {
-  const [opening, setOpening] = useState(false);
+  const [opening, setOpening] = useState(true);
   const [menu, setMenu] = useState(false);
   const [opened, setOpened] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    const timer = setTimeout(() => setOpening(true), 0);
-    return () => clearTimeout(timer);
-  }, []);
   const replayOpening = () => {
     setMenu(false);
     setOpened(false);
@@ -293,6 +290,7 @@ export default function Invitation() {
                 <Character kind="lion" className="breathing" />
                 <Star className="story-star" />
                 <Balloon className="story-balloon" />
+                <PartyArtwork kind="gift" color="blue" className="story-gift" />
               </div>
               <div className="story-copy">
                 <h3>
@@ -312,6 +310,7 @@ export default function Invitation() {
                 <div className="watercolor-wash" />
                 <Character kind="kitten" className="breathing" />
                 <PlayfulButterfly className="story-butterfly" />
+                <PartyArtwork kind="gift" color="pink" className="story-gift" />
               </div>
               <div className="story-copy">
                 <h3>

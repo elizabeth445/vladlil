@@ -21,7 +21,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
     setArriving(false);
   };
   useEffect(() => {
-    if (!arriving) openButton.current?.focus({ preventScroll: true });
+    if (!arriving && matchMedia("(pointer: fine)").matches) openButton.current?.focus({ preventScroll: true });
   }, [arriving]);
   const complete = () => {
     if (finished.current) return;
@@ -37,7 +37,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
     window.scrollTo({ top: 0, behavior: "instant" });
     // ScrollTrigger can restore its last position while the invitation scene cleans up.
     const resetScroll = requestAnimationFrame(() => window.scrollTo({ top: 0, behavior: "instant" }));
-    skipButton.current?.focus({ preventScroll: true });
+    (matchMedia("(pointer: coarse)").matches ? root.current : skipButton.current)?.focus({ preventScroll: true });
     const query = matchMedia("(prefers-reduced-motion: reduce)");
     const changed = () => {
       if (query.matches && sequence.current) {
@@ -88,6 +88,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
         complete();
         return;
       }
+      const compactScene = matchMedia("(max-width: 1100px), (max-height: 500px)").matches;
       setBusy(true);
       preview.current?.pause();
       fallback.current = setTimeout(complete, 6000);
@@ -110,10 +111,11 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
             0.3,
           )
           .set(".envelope-flap", { zIndex: 0 }, 0.66)
+          .to(".opening-scene", { y: compactScene ? 24 : 0, duration: 0.6 }, 0.3)
           .to(
             ".envelope-letter",
             {
-              yPercent: window.innerWidth < 768 ? -148 : -112,
+              yPercent: compactScene ? -116 : -112,
               duration: 0.9,
               ease: "power3.inOut",
             },
@@ -136,7 +138,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
             {
               x: 0,
               rotation: 0,
-              y: window.innerWidth < 768 ? 46 : 0,
+              y: 0,
               duration: 0.65,
             },
             1.05,
@@ -178,6 +180,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
       className={`opening ${arriving ? "is-arriving" : ""}`}
       ref={root}
       role="dialog"
+      tabIndex={-1}
       aria-modal="true"
       aria-labelledby="opening-title"
       onKeyDown={(e) => {
@@ -204,7 +207,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
         Пропустити <ArrowRight size={15} />
       </button>
       {arriving ? <OpeningArrival onReady={arrivalReady} /> : null}
-      <div className="opening-character-backdrop" aria-hidden="true">
+      <div className="opening-balloon-backdrop" aria-hidden="true">
         {["blue", "pink", "gold", "sage", "blue", "pink", "gold", "pink"].map(
           (color, i) => (
             <Balloon
@@ -214,14 +217,6 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
             />
           ),
         )}
-        <Character
-          kind="lion"
-          src="/art/lion-opening.webp"
-          className="opening-lion"
-          priority
-        />
-        <Character kind="kitten" className="opening-kitten" priority />
-        <Butterfly className="opening-spark spark-c" />
       </div>
       <div className="opening-caption">
         <span className="little-hearts" aria-hidden="true">
@@ -235,41 +230,53 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
         </p>
         <span className="opening-dedication">від двох маленьких серденьок</span>
       </div>
-      <div className="opening-stage">
-        <button
-          type="button"
-          className="envelope"
-          aria-label="Відкрити конверт"
-          disabled={busy || arriving}
-          onClick={open}
-          onPointerEnter={() => previewInteraction(true)}
-          onPointerLeave={() => previewInteraction(false)}
-          onPointerDown={() => previewInteraction(true)}
-          onPointerCancel={() => previewInteraction(false)}
-          onFocus={() => previewInteraction(true)}
-          onBlur={() => previewInteraction(false)}
-        >
-          <span className="envelope-back" aria-hidden="true" />
-          <span className="envelope-letter-window" aria-hidden="true">
-            <span className="envelope-letter">
-              <small className="envelope-invitation">Запрошуємо на день народження</small>
-              <span className="envelope-names">
-                <span className="envelope-name-blue">Владислава</span>
-                <br />
-                <span className="envelope-conjunction">та</span>{" "}
-                <span className="envelope-name-pink">Лілії</span>
+      <div className="opening-scene">
+        <div className="opening-character-backdrop" aria-hidden="true">
+          <Character
+            kind="lion"
+            src="/art/lion-opening.webp"
+            className="opening-lion"
+            priority
+          />
+          <Character kind="kitten" className="opening-kitten" priority />
+          <Butterfly className="opening-spark spark-c" />
+        </div>
+        <div className="opening-stage">
+          <button
+            type="button"
+            className="envelope"
+            aria-label="Відкрити конверт"
+            disabled={busy || arriving}
+            onClick={open}
+            onPointerEnter={() => previewInteraction(true)}
+            onPointerLeave={() => previewInteraction(false)}
+            onPointerDown={() => previewInteraction(true)}
+            onPointerCancel={() => previewInteraction(false)}
+            onFocus={() => previewInteraction(true)}
+            onBlur={() => previewInteraction(false)}
+          >
+            <span className="envelope-back" aria-hidden="true" />
+            <span className="envelope-letter-window" aria-hidden="true">
+              <span className="envelope-letter">
+                <small className="envelope-invitation">Запрошуємо на день народження</small>
+                <span className="envelope-names">
+                  <span className="envelope-name-blue">Владислава</span>
+                  <br />
+                  <span className="envelope-conjunction">та</span>{" "}
+                  <span className="envelope-name-pink">Лілії</span>
+                </span>
+                <small>Нам 2 рочки!</small>
               </span>
-              <small>Нам 2 рочки!</small>
             </span>
-          </span>
-          <span className="envelope-front" aria-hidden="true" />
-          <span className="envelope-flap" aria-hidden="true" />
-          <span className="envelope-seal" aria-hidden="true">
-            <Heart fill="currentColor" />
-          </span>
-        </button>
-        <Star className="opening-spark spark-a" />
-        <Star className="opening-spark spark-b" />
+            <span className="envelope-front" aria-hidden="true" />
+            <span className="envelope-flap" aria-hidden="true" />
+            <span className="envelope-seal" aria-hidden="true">
+              <Heart fill="currentColor" />
+            </span>
+          </button>
+          <Star className="opening-spark spark-a" />
+          <Star className="opening-spark spark-b" />
+        </div>
       </div>
       <button
         ref={openButton}

@@ -5,7 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
 import { RotateCcw, Sparkles } from "lucide-react";
 import { countdown } from "@/lib/event";
-import { Balloon, Star } from "./Artwork";
+import { Balloon, Star, PartyArtwork } from "./Artwork";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 const units = ["Днів", "Годин", "Хвилин", "Секунд"];
 const colors = ["blue", "pink", "gold", "sage"];
@@ -248,6 +248,10 @@ export default function Countdown() {
         </>
       )}
       <p className="clock-caption">Ще трохи — і обіймемося!</p>
+      <div className="birthday-treats" aria-hidden="true">
+        <PartyArtwork kind="cake" color="blue" />
+        <PartyArtwork kind="cake" color="pink" />
+      </div>
     </section>
   );
 }

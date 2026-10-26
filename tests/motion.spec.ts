@@ -72,7 +72,7 @@ test("watercolor postcard responds to pointer and keyboard, settles and respects
   })).toBe(0);
 });
 
-test("layered characters wave from a fixed shoulder, blink and pause offscreen", async ({ page }) => {
+test("closing characters wave from the upper shoulder and pause offscreen", async ({ page }) => {
   await enter(page);
   const greeting = page.getByRole("button", { name: "Привітатися з іменинниками ще раз" });
   await greeting.scrollIntoViewIfNeeded();
@@ -102,18 +102,11 @@ test("layered characters wave from a fixed shoulder, blink and pause offscreen",
     }; sample();
   }));
   expect(movement.angle).toBeGreaterThan(2);
-  expect(movement.angle).toBeLessThanOrEqual(4.1);
+  expect(movement.angle).toBeLessThanOrEqual(3.1);
   expect(movement.pivotDrift).toBeLessThan(0.5);
   expect(movement.canvasDrift).toBeLessThan(0.5);
-  expect(await lion.evaluate(element => new Promise<boolean>(resolve => {
-    const start = performance.now();
-    const sample = () => {
-      if (getComputedStyle(element.querySelector(".rig-eyes-closed")!).opacity === "1") resolve(true);
-      else if (performance.now() - start < 7500) requestAnimationFrame(sample);
-      else resolve(false);
-    }; sample();
-  }))).toBe(true);
-  await expect(lion.locator(".rig-eyes-closed")).toHaveCSS("opacity", "0");
+  await expect(greeting.locator('.rig-head img')).toHaveCount(2);
+  await expect(greeting.locator('img[src*="head-closed"]')).toHaveCount(0);
   await page.locator("#home").scrollIntoViewIfNeeded();
   await expect(lion).toHaveAttribute("data-idle-running", "false");
   await greeting.scrollIntoViewIfNeeded();
@@ -345,4 +338,51 @@ test("painted frame keeps proportions and characters and butterfly respond to in
         (e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).m42,
       ),
   ).toBeCloseTo(0, 0);
+});
+
+test("hero keeps both paws down, glances inward smoothly and only shows a message on tap", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await enter(page);
+  const characters = page.locator(".hero-characters");
+  await expect(characters.locator(".rig-wave")).toHaveCount(0);
+  await expect(characters.locator(".rig-rest, .rig-front-near")).toHaveCount(4);
+  await expect(characters.locator(".rig-head img")).toHaveCount(2);
+  const motion = await characters.evaluate(element => new Promise<{ maxJump: number; gaze: number; stableSources: boolean }>(resolve => {
+    const heads = [...element.querySelectorAll<HTMLElement>(".rig-head-idle")];
+    const sources = [...element.querySelectorAll<HTMLImageElement>(".rig-head img")].map(img => img.src);
+    const previous = heads.map(head => new DOMMatrixReadOnly(getComputedStyle(head).transform));
+    let maxJump = 0, gaze = 0, stableSources = true;
+    const start = performance.now();
+    const sample = () => {
+      heads.forEach((head, i) => {
+        const matrix = new DOMMatrixReadOnly(getComputedStyle(head).transform);
+        maxJump = Math.max(maxJump, Math.abs(matrix.m41 - previous[i].m41), Math.abs(matrix.m42 - previous[i].m42));
+        gaze = Math.max(gaze, Math.abs(matrix.m13));
+        previous[i] = matrix;
+      });
+      stableSources &&= [...element.querySelectorAll<HTMLImageElement>(".rig-head img")].every((img, i) => img.src === sources[i]);
+      if (performance.now() - start < 3500) requestAnimationFrame(sample); else resolve({ maxJump, gaze, stableSources });
+    }; sample();
+  }));
+  expect(motion.gaze).toBeGreaterThan(0.04);
+  expect(motion.maxJump).toBeLessThan(0.6);
+  expect(motion.stableSources).toBe(true);
+  await page.getByRole("button", { name: "Погладити кошеня" }).click();
+  await expect(page.locator(".character-play-kitten .character-greeting")).toBeVisible();
+  await expect(characters.locator(".rig-wave")).toHaveCount(0);
+});
+
+test("closing waits for its foreleg artwork before starting the wave", async ({ page }) => {
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  await page.route("**/paw-wave-bent.png", async route => { await gate; await route.continue(); });
+  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.getByRole("button", { name: "Пропустити", exact: true }).click();
+  const greeting = page.locator(".closing-greeting");
+  await greeting.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(350);
+  await expect(greeting.locator(".rig-lion")).toHaveAttribute("data-wave-state", "idle");
+  release();
+  await expect(greeting.locator(".rig-lion")).toHaveAttribute("data-wave-state", "waving");
+  await expect.poll(() => greeting.locator(".rig-wave img").evaluateAll(es => es.every(e => (e as HTMLImageElement).naturalWidth > 0))).toBe(true);
 });

@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 
 test("iPhone WebKit: invitation gesture starts music and touch control pauses it", async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem("invitation-music-muted", "true"));
   await page.emulateMedia({ reducedMotion: "reduce" });
   await page.goto("/");
   const audio = page.locator("audio");

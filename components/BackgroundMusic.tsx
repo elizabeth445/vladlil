@@ -1,78 +1,45 @@
 "use client";
 
-import { useEffect, useId, useRef, useSyncExternalStore } from "react";
-
-const PREFERENCE = "invitation-music-muted";
-const CHANGE_EVENT = "invitation-music-change";
-
-function subscribe(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  window.addEventListener(CHANGE_EVENT, onChange);
-  return () => {
-    window.removeEventListener("storage", onChange);
-    window.removeEventListener(CHANGE_EVENT, onChange);
-  };
-}
+import { useEffect, useId, useRef, useState } from "react";
 
 export function useBackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement>(null);
-  const fallbackMuted = useRef<boolean | null>(null);
-  const isMuted = () => {
-    if (fallbackMuted.current !== null) return fallbackMuted.current;
-    try {
-      return localStorage.getItem(PREFERENCE) === "true";
-    } catch {
-      return false;
-    }
-  };
-  const muted = useSyncExternalStore(subscribe, isMuted, () => false);
-
-  const setMuted = (value: boolean) => {
-    try {
-      localStorage.setItem(PREFERENCE, String(value));
-      fallbackMuted.current = null;
-    } catch {
-      // The audio control still works when browser storage is unavailable.
-      fallbackMuted.current = value;
-    }
-    window.dispatchEvent(new Event(CHANGE_EVENT));
-  };
+  const mounted = useRef(false);
+  const [playing, setPlaying] = useState(false);
 
   const play = () => {
     const audio = audioRef.current;
     if (!audio) return;
     audio.volume = 0.35;
-    void audio.play().catch((error: unknown) => {
-      if (!(error instanceof DOMException) || !["AbortError", "NotAllowedError"].includes(error.name)) {
-        setMuted(true);
-      }
+    // Call play synchronously inside the envelope's trusted click/tap. Delaying
+    // it until the animation completes loses the audio permission on iOS.
+    void audio.play().catch(() => {
+      if (mounted.current) setPlaying(!audio.paused && !audio.ended && !audio.error);
     });
   };
-
-  const start = () => {
-    if (!isMuted()) play();
-  };
-
   const toggle = () => {
-    if (isMuted()) {
-      setMuted(false);
-      play();
-    } else {
-      audioRef.current?.pause();
-      setMuted(true);
-    }
+    const audio = audioRef.current;
+    if (!audio) return;
+    if (audio.paused) play();
+    else audio.pause();
   };
-
-  useEffect(() => {
-    if (muted) audioRef.current?.pause();
-  }, [muted]);
 
   useEffect(() => {
     const audio = audioRef.current;
-    return () => audio?.pause();
+    if (!audio) return;
+    mounted.current = true;
+    const sync = () => setPlaying(!audio.paused && !audio.ended && !audio.error);
+    for (const event of ["playing", "pause", "ended", "error"]) audio.addEventListener(event, sync);
+    return () => {
+      mounted.current = false;
+      for (const event of ["playing", "pause", "ended", "error"]) audio.removeEventListener(event, sync);
+      audio.pause();
+    };
   }, []);
 
-  return { audioRef, muted, start, toggle };
+  // Opening the envelope always starts the music, including after a previous
+  // visit was muted. Pausing during this visit stays in effect while scrolling.
+  return { audioRef, muted: !playing, start: play, toggle };
 }
 
 export function MusicToggle({

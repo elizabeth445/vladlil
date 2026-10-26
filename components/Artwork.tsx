@@ -4,11 +4,13 @@ export function Character({
   className = "",
   priority = false,
   src,
+  children,
 }: {
   kind: "lion" | "kitten";
   className?: string;
   priority?: boolean;
   src?: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className={`character ${kind} ${className}`}>
@@ -24,6 +26,7 @@ export function Character({
         priority={priority}
         sizes="(max-width: 600px) 44vw, (max-width: 1000px) 30vw, 360px"
       />
+      {children}
     </div>
   );
 }

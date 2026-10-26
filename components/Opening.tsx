@@ -144,12 +144,15 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
             1.05,
           )
           .to(
-            ".opening-balloon",
+            ".held-balloon-flight",
             {
-              y: -window.innerHeight,
-              rotation: 12,
-              stagger: 0.1,
-              duration: 1.3,
+              x: (i) => [-85, 12, 60, -60, -12, 85][i],
+              y: (i) => -window.innerHeight - 80 - (i % 3) * 45,
+              rotation: (i) => [-18, 5, 21, -21, -5, 18][i],
+              stagger: 0.075,
+              duration: 1.55,
+              ease: "power1.in",
+              zIndex: 2,
             },
             0.3,
           )
@@ -207,17 +210,6 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
         Пропустити <ArrowRight size={15} />
       </button>
       {arriving ? <OpeningArrival onReady={arrivalReady} /> : null}
-      <div className="opening-balloon-backdrop" aria-hidden="true">
-        {["blue", "pink", "gold", "sage", "blue", "pink", "gold", "pink"].map(
-          (color, i) => (
-            <Balloon
-              key={i}
-              color={color}
-              className={`opening-balloon opening-balloon-${i}`}
-            />
-          ),
-        )}
-      </div>
       <div className="opening-caption">
         <span className="little-hearts" aria-hidden="true">
           <Heart />
@@ -237,8 +229,12 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
             src="/art/lion-opening.webp"
             className="opening-lion"
             priority
-          />
-          <Character kind="kitten" className="opening-kitten" priority />
+          >
+            <BalloonBouquet kind="lion" />
+          </Character>
+          <Character kind="kitten" className="opening-kitten" priority>
+            <BalloonBouquet kind="kitten" />
+          </Character>
           <Butterfly className="opening-spark spark-c" />
         </div>
         <div className="opening-stage">
@@ -293,6 +289,33 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
       <p className="opening-footnote">
         Дві маленькі історії. Одне велике свято.
       </p>
+    </div>
+  );
+}
+
+function BalloonBouquet({ kind }: { kind: "lion" | "kitten" }) {
+  const colors = kind === "lion" ? ["blue", "gold", "sage"] : ["pink", "gold", "pink"];
+  const knots = [[34, 84], [72.5, 60], [109, 99]];
+  return (
+    <div className="held-bouquet" aria-hidden="true">
+      {colors.map((color, i) => (
+        <div key={i} className={`held-balloon-flight held-flight-${i}`}>
+          {[false, true].map(grip => (
+            <svg key={String(grip)} className={`held-balloon-thread${grip ? " held-balloon-grip" : ""}`} viewBox="0 0 140 230">
+              <path
+                d={grip ? "M80 216Q90 221 100 225" : `M${knots[i][0]} ${knots[i][1]}C${knots[i][0] - 18} ${knots[i][1] + 45} 10 190 100 225`}
+                fill="none"
+                stroke="#b69d7c"
+                strokeWidth="0.8"
+                strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
+                transform={kind === "kitten" ? "translate(140 0) scale(-1 1)" : undefined}
+              />
+            </svg>
+          ))}
+          <Balloon color={color} className={`held-balloon held-balloon-${i}`} />
+        </div>
+      ))}
     </div>
   );
 }

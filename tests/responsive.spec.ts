@@ -60,7 +60,9 @@ test("compact invitation centers the envelope between its hosts and keeps contro
     expect(scene.right).toBeLessThanOrEqual(scene.width);
     expect(scene.dialogWidth).toBe(scene.width);
     if (viewport.width <= 767) {
-      const visibleBalloons = await page.locator(".opening-balloon").evaluateAll(elements => elements.every(element => {
+      await expect(page.locator(".held-bouquet")).toHaveCount(2);
+      await expect(page.locator(".held-balloon")).toHaveCount(6);
+      const visibleBalloons = await page.locator(".held-balloon").evaluateAll(elements => elements.every(element => {
         const box = element.getBoundingClientRect();
         return box.left >= 0 && box.right <= innerWidth;
       }));
@@ -86,8 +88,12 @@ test("narrow scene opens by touching the centered envelope and reveals all card 
   await page.goto("/");
   const envelope = page.getByRole("button", { name: "Відкрити конверт", exact: true });
   await expect(envelope).toBeEnabled({ timeout: 12000 });
+  const before = await page.locator(".held-balloon-flight").evaluateAll(elements => elements.map(element => element.getBoundingClientRect().top));
   await envelope.click();
-  await page.waitForTimeout(1850);
+  await page.waitForTimeout(1100);
+  const released = await page.locator(".held-balloon-flight").evaluateAll(elements => elements.map(element => element.getBoundingClientRect().top));
+  expect(released.every((top, i) => top < before[i] - 10)).toBe(true);
+  await page.waitForTimeout(750);
   const card = await page.evaluate(() => {
     const letter = document.querySelector<HTMLElement>(".envelope-letter")!;
     const bounds = letter.getBoundingClientRect();

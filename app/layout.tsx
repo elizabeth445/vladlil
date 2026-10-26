@@ -17,7 +17,7 @@ export default function RootLayout({
     <html lang="uk">
       <body>
         {children}
-        {process.env.NODE_ENV === "development" ? <DevelopmentTools /> : null}
+        <DevelopmentTools />
       </body>
     </html>
   );

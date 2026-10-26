@@ -5,8 +5,14 @@ import { useGSAP } from "@gsap/react";
 import { Heart, ArrowRight } from "lucide-react";
 import { Character, Star, Butterfly, Balloon } from "./Artwork";
 import OpeningArrival from "./OpeningArrival";
+import { MusicToggle } from "./BackgroundMusic";
 gsap.registerPlugin(useGSAP);
-export default function Opening({ onOpened }: { onOpened: () => void }) {
+export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicToggle }: {
+  onOpened: () => void;
+  onOpenStart: () => void;
+  musicMuted: boolean;
+  onMusicToggle: () => void;
+}) {
   const root = useRef<HTMLDivElement>(null);
   const openButton = useRef<HTMLButtonElement>(null);
   const sequence = useRef<gsap.core.Timeline | null>(null);
@@ -84,6 +90,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
   const open = () =>
     contextSafe(() => {
       if (busy || arriving || sequence.current || finished.current) return;
+      onOpenStart();
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         complete();
         return;
@@ -175,6 +182,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
       }
     })();
   const skip = () => {
+    onOpenStart();
     sequence.current?.kill();
     complete();
   };
@@ -209,6 +217,7 @@ export default function Opening({ onOpened }: { onOpened: () => void }) {
       <button ref={skipButton} className="skip" onClick={skip}>
         Пропустити <ArrowRight size={15} />
       </button>
+      <MusicToggle muted={musicMuted} onToggle={onMusicToggle} />
       {arriving ? <OpeningArrival onReady={arrivalReady} /> : null}
       <div className="opening-caption">
         <span className="little-hearts" aria-hidden="true">

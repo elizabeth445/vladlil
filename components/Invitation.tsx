@@ -30,8 +30,10 @@ import Letters from "./Letters";
 import RSVP from "./RSVP";
 import ClosingGreeting from "./ClosingGreeting";
 import VenueSection from "./VenueSection";
+import { MusicToggle, useBackgroundMusic } from "./BackgroundMusic";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 export default function Invitation() {
+  const { audioRef, muted: musicMuted, start: startMusic, toggle: toggleMusic } = useBackgroundMusic();
   const [opening, setOpening] = useState(true);
   const [menu, setMenu] = useState(false);
   const [opened, setOpened] = useState(false);
@@ -361,7 +363,15 @@ export default function Invitation() {
           </section>
         </main>
       </div>
-      {opening ? <Opening onOpened={finishOpening} /> : null}
+      <audio ref={audioRef} src="/audio/birthday-background.mp3" loop preload="none" aria-hidden="true" />
+      {!opening ? (
+        <div className="music-dock">
+          <MusicToggle muted={musicMuted} onToggle={toggleMusic} />
+        </div>
+      ) : null}
+      {opening ? (
+        <Opening onOpened={finishOpening} onOpenStart={startMusic} musicMuted={musicMuted} onMusicToggle={toggleMusic} />
+      ) : null}
       <noscript>
         <style>{".invitation{display:block!important}"}</style>
         <p className="noscript-note">

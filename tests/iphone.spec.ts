@@ -1,5 +1,22 @@
 import { test, expect } from "@playwright/test";
 
+test("iPhone WebKit: invitation gesture starts music and touch control pauses it", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const audio = page.locator("audio");
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).tap();
+  await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.currentTime)).toBeGreaterThan(0);
+  await page.getByRole("button", { name: "Вимкнути музику", exact: true }).tap();
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.getByRole("button", { name: "Відкрити запрошення ще раз", exact: true }).tap();
+  await expect(page.getByRole("button", { name: "Увімкнути музику", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Пропустити", exact: true }).tap();
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.getByRole("button", { name: "Увімкнути музику", exact: true }).tap();
+  await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
+});
+
 test("iPhone WebKit: closing greeting stays connected and settles after touch replay", async ({
   page,
 }) => {

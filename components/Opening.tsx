@@ -31,11 +31,14 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
   useEffect(() => {
     if (!arriving && matchMedia("(pointer: fine)").matches) openButton.current?.focus({ preventScroll: true });
   }, [arriving]);
-  const complete = useCallback((morphed = false) => {
+  const complete = useCallback((morphed = false, handoff = false) => {
     if (finished.current) return;
     finished.current = true;
     if (fallback.current) clearTimeout(fallback.current);
-    morph.current?.cleanup();
+    // Never repaint the entrance while React commits the revealed page.
+    if (root.current) root.current.style.display = "none";
+    if (handoff) morph.current?.finish();
+    else morph.current?.cleanup();
     morph.current = null;
     onOpened(morphed);
   }, [onOpened]);
@@ -65,7 +68,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
       if (fallback.current) clearTimeout(fallback.current);
     };
   }, [complete]);
-  const { contextSafe } = useGSAP(
+  const { context: openingContext, contextSafe } = useGSAP(
     () => {
       const mm = gsap.matchMedia();
       mm.add("(prefers-reduced-motion: no-preference)", () => {
@@ -91,7 +94,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
   };
   const open = () =>
     contextSafe(() => {
-      if (busy || arriving || sequence.current || finished.current) return;
+      if (busy || sequence.current || finished.current) return;
       onOpenStart();
       if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         complete();
@@ -108,8 +111,16 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             onComplete: contextSafe(() => {
               try {
                 if (finished.current || !root.current) return;
-                morph.current = createOpeningMorph(root.current, () => complete(true));
-                morph.current.timeline.play();
+                // This stage outlives Opening by two paint frames. Its own
+                // cleanup owns it; unmounting Opening must not rewind it.
+                openingContext.ignore(() => {
+                  try {
+                    morph.current = createOpeningMorph(root.current!, () => complete(true, true));
+                  } catch {
+                    complete(true);
+                  }
+                });
+                void morph.current?.play().catch(() => complete(true));
               } catch {
                 complete(true);
               }
@@ -212,7 +223,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
         Пропустити <ArrowRight size={15} />
       </button>
       <MusicToggle muted={musicMuted} onToggle={onMusicToggle} />
-      {arriving ? <OpeningArrival onReady={arrivalReady} /> : null}
+      {arriving ? <OpeningArrival onReady={arrivalReady} departing={busy} /> : null}
       <div className="opening-caption">
         <span className="little-hearts" aria-hidden="true">
           <Heart />
@@ -246,7 +257,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             type="button"
             className="envelope"
             aria-label="Відкрити конверт"
-            disabled={busy || arriving}
+            disabled={busy}
             onClick={open}
             onPointerEnter={() => previewInteraction(true)}
             onPointerLeave={() => previewInteraction(false)}
@@ -286,7 +297,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
         onPointerLeave={() => previewInteraction(false)}
         onPointerDown={() => previewInteraction(true)}
         onPointerCancel={() => previewInteraction(false)}
-        disabled={busy || arriving}
+        disabled={busy}
       >
         {busy ? "Трохи чарів…" : "Відкрити запрошення"} <Heart size={18} />
       </button>

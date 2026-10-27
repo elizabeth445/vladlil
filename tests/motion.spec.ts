@@ -23,9 +23,9 @@ for (const width of [390, 1512]) {
       await expect(page.getByRole("dialog")).toHaveCount(0);
       await expect(page.locator(".hero-names > span").first()).toHaveAttribute("data-reveal-state", "complete");
       await expect(page.locator(".hero-names > span").last()).toHaveAttribute("data-reveal-state", "complete");
-      expect(await page.locator(".hero-names .split-char").count()).toBe(15);
+      expect(await page.locator(".hero-names .split-char").count()).toBe(0);
       const stability = await page.locator("#hero-title").evaluate(element => new Promise<number>(resolve => {
-        const chars = [...element.querySelectorAll(".split-char")];
+        const chars = [...element.querySelectorAll(":scope > span")];
         const initial = chars.map(char => char.getBoundingClientRect());
         let drift = 0;
         const start = performance.now();

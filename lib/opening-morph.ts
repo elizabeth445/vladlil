@@ -58,8 +58,12 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
   const stage = document.createElement("div");
   stage.className = "invitation-morph";
   stage.setAttribute("aria-hidden", "true");
+  stage.style.visibility = "hidden";
   const hidden: { element: HTMLElement; visibility: string }[] = [];
   const faded: { element: HTMLElement; opacity: string }[] = [];
+  const images: HTMLImageElement[] = [];
+  let disposed = false;
+  let handoffFrame = 0;
   const conceal = (element: HTMLElement) => {
     hidden.push({ element, visibility: element.style.visibility });
     element.style.visibility = "hidden";
@@ -69,10 +73,21 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
     for (const { element, visibility } of hidden) element.style.visibility = visibility;
   };
   const cleanup = () => {
+    if (disposed) return;
+    disposed = true;
+    cancelAnimationFrame(handoffFrame);
     timeline.kill();
     restore();
     for (const { element, opacity } of faded) element.style.opacity = opacity;
     stage.remove();
+  };
+  const finish = () => {
+    timeline.pause();
+    // Keep the final shared elements visible through React's commit and the
+    // hero's layout effects, then exchange the two layers in one paint.
+    handoffFrame = requestAnimationFrame(() => {
+      handoffFrame = requestAnimationFrame(cleanup);
+    });
   };
 
   try {
@@ -110,6 +125,7 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
         copy.removeAttribute("srcset");
         copy.removeAttribute("sizes");
         copy.loading = "eager";
+        images.push(copy);
       }
       wrapper.append(copy);
       stage.append(wrapper);
@@ -136,11 +152,11 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
         paintedSource.removeAttribute("data-morph");
         Object.assign(paintedSource.style, { position: "absolute", inset: "0", width: "100%", height: "100%", margin: "0", transform: "none" });
         wrapper.append(paintedSource);
-        timeline.fromTo(copy, { opacity: 0 }, { opacity: 1, duration: 0.35, ease: "sine.inOut" }, 0.08);
+        images.push(paintedSource);
+        // Keep the destination fully painted underneath the source. Fading
+        // both in opposite directions causes a visible dip in opacity.
         timeline.to(paintedSource, { opacity: 0, duration: 0.35, ease: "sine.inOut" }, 0.08);
       }
-      conceal(source);
-      conceal(target);
       timeline.to(wrapper, { ...destination, duration: 1.65, ease: "power3.inOut" }, 0);
     }
 
@@ -155,8 +171,17 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
     reveal("#home .hero-date, #home .scroll-cue", 1.15, 0.5);
     faded.push({ element: opening, opacity: opening.style.opacity });
     timeline.to(opening, { opacity: 0, duration: 0.9, ease: "sine.inOut" }, 0);
-    timeline.call(restore, [], 1.65);
-    return { timeline, cleanup };
+    const play = async () => {
+      await Promise.all(images.map(image => image.decode().catch(() => undefined)));
+      if (disposed) return;
+      for (const { source, target } of pairs) {
+        conceal(source);
+        conceal(target);
+      }
+      stage.style.visibility = "visible";
+      timeline.play();
+    };
+    return { play, cleanup, finish };
   } catch (error) {
     cleanup();
     throw error;

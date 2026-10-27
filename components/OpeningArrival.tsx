@@ -21,9 +21,10 @@ const balloons = Array.from({ length: 48 }, (_, i) => ({
   color: Math.floor(sample(i, 2) * 6),
 }));
 
-export default function OpeningArrival({ onReady }: { onReady: () => void }) {
+export default function OpeningArrival({ onReady, departing = false }: { onReady: () => void; departing?: boolean }) {
   const root = useRef<HTMLDivElement>(null);
   const ready = useRef(onReady);
+  const flight = useRef<gsap.core.Timeline | null>(null);
   useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -42,6 +43,7 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
             root.current!,
           );
           const timeline = gsap.timeline({ paused: true, onComplete: () => ready.current() });
+          flight.current = timeline;
           const height = window.innerHeight;
           const width = window.innerWidth;
           const mobile = width < 768;
@@ -97,6 +99,7 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
             artwork.addEventListener("error", start, { once: true });
           }
           return () => {
+            flight.current = null;
             artwork?.removeEventListener("load", start);
             artwork?.removeEventListener("error", start);
           };
@@ -106,6 +109,9 @@ export default function OpeningArrival({ onReady }: { onReady: () => void }) {
     },
     { scope: root },
   );
+  useGSAP(() => {
+    if (departing) flight.current?.timeScale(6).play();
+  }, { dependencies: [departing], scope: root });
 
   return (
     <div ref={root} className="opening-arrival" aria-hidden="true">

@@ -27,13 +27,15 @@ export default function SplitText({ text, active, className = "", delay = 32, se
   useGSAP(() => {
     if (!active || !fontsReady) return;
     const element = root.current!;
+    // A completed shared-element flight already contains the final glyphs.
+    // Leave that DOM intact instead of replacing it at the handoff.
+    if (settled) {
+      element.dataset.revealState = "complete";
+      return () => { element.dataset.revealState = "idle"; };
+    }
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const split = new GSAPSplitText(element, { type: "chars", charsClass: "split-char", smartWrap: true });
-      if (settled) {
-        element.dataset.revealState = "complete";
-        return () => { split.revert(); element.dataset.revealState = "idle"; };
-      }
       const tween = gsap.fromTo(split.chars,
         { opacity: 0, y: 14 },
         { opacity: 1, y: 0, duration: 0.65, ease: "power3.out", stagger: delay / 1000,

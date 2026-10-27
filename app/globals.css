@@ -5115,6 +5115,9 @@ button:disabled {
   color: var(--blue);
 }
 .closing-host-pink .closing-caption { color: var(--pink); }
+.closing-greeting { display: grid; grid-template-columns: 1fr 1fr; }
+.closing-greeting .closing-host { width: 100%; grid-template-rows: minmax(3.4em, auto); }
+.closing-greeting .animated-character { grid-column: 1 / -1; }
 @media (max-width: 1100px) {
   .hero { height: auto; max-height: none; min-height: calc(100svh - 80px); padding-bottom: 28px; }
   .hero-characters {

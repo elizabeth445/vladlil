@@ -64,5 +64,39 @@
       "kitten.mov": 3970271,
       "kitten.webp": 6925190
     }
+  },
+  "together": {
+    "source": "lion_kitten_hug_wave.mp4",
+    "sourceSha256": "7daa90a8faf980c86171f5f67837391045067be9369e89597cfda3c48ce8ad16",
+    "fps": 24.0,
+    "frames": 192,
+    "duration": 8.0,
+    "width": 896,
+    "height": 512,
+    "crop": [
+      0,
+      0,
+      896,
+      512
+    ],
+    "method": "BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination",
+    "alphaVerification": {
+      "minimumSemanticInteriorRetention": 1.0,
+      "minimumTailForegroundRetention": null,
+      "masterFrames": 192,
+      "webpFrames": 192,
+      "vp9Frames": 192,
+      "webpDurationMs": 7999,
+      "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
+      "allMasterFramesHaveAntialiasedEdges": true,
+      "maxAdjacentSilhouetteAreaChange": 0.0155457734250191
+    },
+    "files": {
+      "together.mov": 3391176,
+      "together-first.webp": 333752,
+      "together-last.webp": 326270,
+      "together.webm": 3599392,
+      "together.webp": 5740074
+    }
   }
 }

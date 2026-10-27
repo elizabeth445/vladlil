@@ -312,7 +312,7 @@ export default function Invitation() {
             />
             <h2>Ми дуже чекаємо на вас!</h2>
             <p>З любов’ю, Владислав та Лілія</p>
-            <ClosingGreeting />
+            <ClosingGreeting active={!opening} />
             <Ribbon className="closing-bow left" />
             <Ribbon className="closing-bow right" />
             <p className="closing-date">

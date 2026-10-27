@@ -42,7 +42,7 @@ test("iPhone WebKit: invitation gesture starts music and touch control pauses it
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
 });
 
-test("iPhone WebKit: original seated characters and closing captions stay static", async ({ page }) => {
+test("iPhone WebKit: shared closing animation stays transparent and replays on tap", async ({ page }) => {
   const errors: string[] = [];
   page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
@@ -50,11 +50,20 @@ test("iPhone WebKit: original seated characters and closing captions stay static
   await expect(page.locator("#home .closing-caption")).toHaveCount(0);
   const greeting = page.locator(".closing-greeting");
   await greeting.scrollIntoViewIfNeeded();
-  await expect(greeting.locator(".seated-character")).toHaveCount(2);
+  const together = greeting.locator(".animated-together");
+  await expect(together).toHaveAttribute("data-state", "playing");
+  expect(await together.locator("video").evaluate(element => {
+    const video = element as HTMLVideoElement, canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+    const context = canvas.getContext("2d")!; context.drawImage(video, 0, 0);
+    return context.getImageData(0, 0, 1, 1).data[3];
+  })).toBe(0);
   await expect(greeting).toContainText("Радий вас бачити!");
   await expect(greeting).toContainText("Мур-р! До зустрічі!");
-  await greeting.tap();
-  await expect(greeting.locator("button, .rig-shoulder")).toHaveCount(0);
+  await expect(together).toHaveAttribute("data-state", "ended", { timeout: 12000 });
+  await together.tap();
+  await expect(together).toHaveAttribute("data-state", "playing");
+  await expect(greeting.locator(".rig-shoulder")).toHaveCount(0);
   for (const image of await greeting.locator("img").all()) await expect(image).toHaveCSS("transform", "none");
   await page.screenshot({ path: "output/playwright/iphone-webkit-greeting.png" });
   expect(errors).toEqual([]);

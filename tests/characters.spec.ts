@@ -29,7 +29,8 @@ test("original seated artwork stays level, clears the date and keeps greetings o
     const closing = page.locator(".closing-greeting");
     await closing.scrollIntoViewIfNeeded();
     await expect(closing.locator(".closing-caption")).toHaveText(["Радий вас бачити!", "Мур-р! До зустрічі!"]);
-    await expect(closing.locator(".seated-character img")).toHaveCount(2);
+    await expect(closing.locator(".animated-together")).toHaveCount(1);
+    await expect(closing.locator(".animated-together")).toHaveAttribute("data-state", "idle");
     for (const image of await closing.locator("img").all()) await expect(image).toHaveCSS("transform", "none");
   }
 });

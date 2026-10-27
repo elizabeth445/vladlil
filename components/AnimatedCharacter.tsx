@@ -4,8 +4,9 @@ import { useEffect, useRef } from "react";
 import { characterFormat, type CharacterFormat } from "@/lib/character-alpha";
 
 const artwork = {
-  lion: { width: 800, height: 504, name: "левеняти з подарунком" },
-  kitten: { width: 658, height: 472, name: "кошеняти з подарунком" },
+  lion: { width: 800, height: 504, duration: 10000, name: "левеняти з подарунком" },
+  kitten: { width: 658, height: 472, duration: 10000, name: "кошеняти з подарунком" },
+  together: { width: 896, height: 512, duration: 8000, name: "обіймів левеняти й кошеняти" },
 };
 
 type Props = {
@@ -24,7 +25,7 @@ export default function AnimatedCharacter({ kind, loop = false, enabled = true, 
   const poster = useRef<HTMLImageElement>(null);
   const video = useRef<HTMLVideoElement>(null);
   const animation = useRef<HTMLImageElement>(null);
-  const { width, height, name } = artwork[kind];
+  const { width, height, duration, name } = artwork[kind];
   const prefix = `/animations/${kind}`;
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export default function AnimatedCharacter({ kind, loop = false, enabled = true, 
       if (!alive || run !== generation) return;
       show(image);
       state("playing");
-      timer = setTimeout(ended, 10000);
+      timer = setTimeout(ended, duration);
     };
     const play = async (byHand: boolean) => {
       if (!enabled || !alive || playing || (!byHand && motion.matches)) return;
@@ -172,7 +173,7 @@ export default function AnimatedCharacter({ kind, loop = false, enabled = true, 
       image.onload = image.onerror = null;
       image.removeAttribute("src"); releaseUrl();
     };
-  }, [autoPlay, enabled, format, initialFrame, kind, loop, prefix]);
+  }, [autoPlay, duration, enabled, format, initialFrame, kind, loop, prefix]);
 
   return <button ref={root} type="button" className={`animated-character animated-${kind}`} style={{ aspectRatio: `${width} / ${height}` }} aria-label={`Відтворити анімацію ${name}`} data-kind={kind} data-state="idle">
     {/* Native images preserve animated WebP and its alpha; Next Image must not re-encode them. */}

@@ -27,7 +27,7 @@ DECOR = {
 def decorations(rgb, matte, kind):
     # Only small, explicitly identified decorative objects use color seeds.
     # Animal fur, white gift panels and toys always use semantic object masks.
-    for x0, y0, x1, y1 in DECOR[kind]:
+    for x0, y0, x1, y1 in DECOR.get(kind, []):
         crop = rgb[y0:y1, x0:x1].astype(np.float32)
         edges = np.vstack([rgb[:8].reshape(-1, 3), rgb[-8:].reshape(-1, 3),
                            rgb[:, :8].reshape(-1, 3), rgb[:, -8:].reshape(-1, 3)])
@@ -60,8 +60,11 @@ def warp(mask, previous, current, flow_engine):
     # Current-to-previous dense flow; remapping keeps boundaries attached to
     # the actual moving fur/toy rather than averaging unaligned silhouettes.
     flow = flow_engine.calc(grey(current), grey(previous), None)
-    flow = cv2.resize(flow, (1280, 720)) * 2
-    xx, yy = np.meshgrid(np.arange(1280, dtype=np.float32), np.arange(720, dtype=np.float32))
+    height, width = current.shape[:2]
+    flow = cv2.resize(flow, (width, height))
+    flow[:, :, 0] *= width / 640
+    flow[:, :, 1] *= height / 360
+    xx, yy = np.meshgrid(np.arange(width, dtype=np.float32), np.arange(height, dtype=np.float32))
     return cv2.remap(mask, xx + flow[:, :, 0], yy + flow[:, :, 1], cv2.INTER_LINEAR, borderMode=cv2.BORDER_CONSTANT)
 
 
@@ -105,7 +108,10 @@ def process(kind, source, model, work, destination, interval):
     for folder in [raw, masks, rgba, destination]: folder.mkdir(parents=True, exist_ok=True)
     video = cv2.VideoCapture(str(source))
     fps, count = video.get(cv2.CAP_PROP_FPS), int(video.get(cv2.CAP_PROP_FRAME_COUNT))
-    assert video.get(3) == 1280 and video.get(4) == 720 and fps == 24, 'Inspect source dimensions before changing the workflow'
+    width, height = int(video.get(3)), int(video.get(4))
+    assert fps == 24 and width > 0 and height > 0, 'This workflow preserves 24 FPS sources'
+    matte_width = 896
+    matte_height = round(height / width * matte_width / 2) * 2
     for i in range(count):
         ok, frame = video.read()
         if not ok: raise RuntimeError(f'Cannot decode frame {i}')
@@ -127,7 +133,7 @@ def process(kind, source, model, work, destination, interval):
         flower_reference = np.zeros(first_mask.shape, np.float32)
         flower_reference[440:700, 180:440] = first_mask[440:700, 180:440]
     first_frame = frame(0)
-    bounds = [1280, 720, 0, 0]
+    bounds = [matte_width, matte_height, 0, 0]
     for left, right in zip(keys[:-1], keys[1:]):
         frames = [frame(i) for i in range(left, right + 1)]
         a = np.asarray(Image.open(masks / f'{left:04}.png')).astype(np.float32) / 255
@@ -160,8 +166,8 @@ def process(kind, source, model, work, destination, interval):
                     mask = np.maximum(mask, flower)
                 # Closed-form matting uses the current RGB frame and an object
                 # trimap. It preserves white fur and resolves soft, mixed edges.
-                small = cv2.resize(rgb, (896, 504)).astype(np.float64) / 255
-                m = cv2.resize(mask, (896, 504))
+                small = cv2.resize(rgb, (matte_width, matte_height)).astype(np.float64) / 255
+                m = cv2.resize(mask, (matte_width, matte_height))
                 fg = cv2.erode((m > .5).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
                 bg = cv2.dilate((m > .03).astype(np.uint8), np.ones((5, 5), np.uint8)) == 0
                 trimap = np.full(m.shape, .5); trimap[fg] = 1; trimap[bg] = 0
@@ -177,7 +183,7 @@ def process(kind, source, model, work, destination, interval):
     # A single, fixed crop for the entire clip. Even dimensions for VP9 4:2:0.
     x0, y0, x1, y1 = bounds
     x0, y0 = max(0, x0 - 10) // 2 * 2, max(0, y0 - 10) // 2 * 2
-    x1, y1 = min(896, x1 + 10) // 2 * 2, min(504, y1 + 10) // 2 * 2
+    x1, y1 = min(matte_width, x1 + 10) // 2 * 2, min(matte_height, y1 + 10) // 2 * 2
     final = root / 'final'; final.mkdir(exist_ok=True)
     for i in range(count): Image.open(rgba / f'{i:04}.png').crop((x0, y0, x1, y1)).save(final / f'{i:04}.png')
     for label, i in [('first', 0), ('last', count - 1)]:
@@ -203,12 +209,16 @@ def process(kind, source, model, work, destination, interval):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--lion', type=Path, required=True)
-    parser.add_argument('--kitten', type=Path, required=True)
+    parser.add_argument('--lion', type=Path)
+    parser.add_argument('--kitten', type=Path)
+    parser.add_argument('--together', type=Path)
     parser.add_argument('--model', type=Path, required=True)
     parser.add_argument('--work', type=Path, default=Path('output/character-video/processed'))
     parser.add_argument('--destination', type=Path, default=Path('public/animations'))
-    parser.add_argument('--kind', choices=['lion', 'kitten'])
+    parser.add_argument('--kind', choices=['lion', 'kitten', 'together'])
     parser.add_argument('--interval', type=int, default=8)
     args = parser.parse_args()
-    for kind in ([args.kind] if args.kind else ['lion', 'kitten']): process(kind, getattr(args, kind), args.model, args.work, args.destination, args.interval)
+    for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
+        source = getattr(args, kind)
+        if source is None: parser.error(f'--{kind} is required for the selected scene')
+        process(kind, source, args.model, args.work, args.destination, args.interval)

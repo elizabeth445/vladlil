@@ -8,5 +8,6 @@
 .controls input { width: 18px; height: 18px; }
 .scenes { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; }
 .scenes h2 { font-size: 28px; margin: 18px 0; }
+.scenes[data-together=true] { grid-template-columns: minmax(0, 1fr); max-width: 900px; margin-inline: auto; }
 .stage { padding: 18px; border-radius: 18px; }
 @media(max-width: 700px) { .scenes { grid-template-columns: minmax(0,1fr); } }

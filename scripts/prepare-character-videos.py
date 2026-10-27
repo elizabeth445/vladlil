@@ -102,6 +102,26 @@ def reject_uncertain_paper(rgb, mask, core):
     mask[(difference < 8) & (mask < .98) & (core == 0)] = 0
     return mask
 
+def encode_scene(final, destination, kind, count):
+    destination.mkdir(parents=True, exist_ok=True)
+    for label, i in [('first', 0), ('last', count - 1)]:
+        Image.open(final / f'{i:04}.png').save(destination / f'{kind}-{label}.webp', lossless=True, method=6)
+    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
+    subprocess.run([ffmpeg, '-y', '-hide_banner', '-loglevel', 'error', '-framerate', '24', '-i', str(final / '%04d.png'), '-an', '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-auto-alt-ref', '0', '-b:v', '0', '-crf', '25', '-row-mt', '1', str(destination / f'{kind}.webm')], check=True)
+    subprocess.run([ffmpeg, '-y', '-hide_banner', '-loglevel', 'error', '-framerate', '24', '-i', str(final / '%04d.png'), '-an', '-vf', 'scale=512:-1', '-c:v', 'libwebp_anim', '-quality', '76', '-compression_level', '4', '-loop', '1', str(destination / f'{kind}.webp')], check=True)
+    # ANIM's default canvas is opaque white in FFmpeg; explicitly clear it.
+    animation = destination / f'{kind}.webp'
+    data = bytearray(animation.read_bytes())
+    offset = 12
+    while offset + 8 <= len(data):
+        size = int.from_bytes(data[offset + 4:offset + 8], 'little')
+        if data[offset:offset + 4] == b'ANIM':
+            data[offset + 8:offset + 12] = bytes(4)
+            break
+        offset += 8 + size + (size % 2)
+    animation.write_bytes(data)
+
+
 def process(kind, source, model, work, destination, interval):
     root = work / kind
     raw, masks, rgba = [root / name for name in ['raw', 'masks', 'rgba']]
@@ -186,22 +206,7 @@ def process(kind, source, model, work, destination, interval):
     x1, y1 = min(matte_width, x1 + 10) // 2 * 2, min(matte_height, y1 + 10) // 2 * 2
     final = root / 'final'; final.mkdir(exist_ok=True)
     for i in range(count): Image.open(rgba / f'{i:04}.png').crop((x0, y0, x1, y1)).save(final / f'{i:04}.png')
-    for label, i in [('first', 0), ('last', count - 1)]:
-        Image.open(final / f'{i:04}.png').save(destination / f'{kind}-{label}.webp', lossless=True, method=6)
-    ffmpeg = imageio_ffmpeg.get_ffmpeg_exe()
-    subprocess.run([ffmpeg, '-y', '-hide_banner', '-loglevel', 'error', '-framerate', '24', '-i', str(final / '%04d.png'), '-an', '-c:v', 'libvpx-vp9', '-pix_fmt', 'yuva420p', '-auto-alt-ref', '0', '-b:v', '0', '-crf', '25', '-row-mt', '1', str(destination / f'{kind}.webm')], check=True)
-    subprocess.run([ffmpeg, '-y', '-hide_banner', '-loglevel', 'error', '-framerate', '24', '-i', str(final / '%04d.png'), '-an', '-vf', 'scale=512:-1', '-c:v', 'libwebp_anim', '-quality', '76', '-compression_level', '4', '-loop', '1', str(destination / f'{kind}.webp')], check=True)
-    # ANIM's default canvas is opaque white in FFmpeg; explicitly clear it.
-    animation = destination / f'{kind}.webp'
-    data = bytearray(animation.read_bytes())
-    offset = 12
-    while offset + 8 <= len(data):
-        size = int.from_bytes(data[offset + 4:offset + 8], 'little')
-        if data[offset:offset + 4] == b'ANIM':
-            data[offset + 8:offset + 12] = bytes(4)
-            break
-        offset += 8 + size + (size % 2)
-    animation.write_bytes(data)
+    encode_scene(final, destination, kind, count)
     report = {'source': source.name, 'sourceSha256': hashlib.sha256(source.read_bytes()).hexdigest(), 'fps': fps, 'frames': count, 'duration': count / fps, 'width': x1 - x0, 'height': y1 - y0, 'crop': [x0, y0, x1, y1], 'method': 'BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination'}
     (root / 'report.json').write_text(json.dumps(report, indent=2))
     print(json.dumps(report), flush=True)

@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 import { characterFormat, type CharacterFormat } from "@/lib/character-alpha";
 
 const artwork = {
-  lion: { width: 800, height: 504, duration: 10000, name: "левеняти з подарунком" },
+  lion: { width: 800, height: 624, duration: 10000, name: "левеняти з подарунком" },
   kitten: { width: 658, height: 472, duration: 10000, name: "кошеняти з подарунком" },
   together: { width: 896, height: 512, duration: 8000, name: "обіймів левеняти й кошеняти" },
 };

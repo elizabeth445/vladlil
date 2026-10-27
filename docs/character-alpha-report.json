@@ -6,15 +6,27 @@
     "frames": 240,
     "duration": 10.0,
     "width": 800,
-    "height": 504,
+    "height": 624,
     "crop": [
       18,
       0,
       818,
-      504
+      624
     ],
     "method": "BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination",
+    "restoration": {
+      "tool": "Built-in imagegen; localized transparent patches only",
+      "patches": "assets/animation-restoration/patches.json",
+      "tracking": "SIFT + RANSAC similarity; temporally smoothed anchors",
+      "scope": "Missing crown/star tips and toy/gift bottoms",
+      "originalPixelsPreserved": "Entire original scene inside the source camera boundary"
+    },
     "alphaVerification": {
+      "restorationChecks": {
+        "allFramesClearTopAndBottom": true,
+        "allOriginalLionPixelsPreserved": true
+      },
+      "minimumSemanticInteriorRetention": null,
       "minimumTailForegroundRetention": null,
       "masterFrames": 240,
       "webpFrames": 240,
@@ -22,14 +34,14 @@
       "webpDurationMs": 9999,
       "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
       "allMasterFramesHaveAntialiasedEdges": true,
-      "maxAdjacentSilhouetteAreaChange": 0.030427530105340127
+      "maxAdjacentSilhouetteAreaChange": 0.03037771302524441
     },
     "files": {
-      "lion-first.webp": 293748,
-      "lion-last.webp": 262144,
-      "lion.mov": 3821206,
-      "lion.webp": 6912106,
-      "lion.webm": 3158738
+      "lion-first.webp": 304436,
+      "lion-last.webp": 288206,
+      "lion.mov": 3837380,
+      "lion.webp": 7375518,
+      "lion.webm": 3329547
     }
   },
   "kitten": {
@@ -47,7 +59,18 @@
       500
     ],
     "method": "BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination",
+    "restoration": {
+      "tool": "Built-in imagegen; localized transparent patches only",
+      "patches": "assets/animation-restoration/patches.json",
+      "tracking": "SIFT + RANSAC similarity; temporally smoothed anchors",
+      "scope": "Doll feet replaced by the tracked front gift wall before they emerge",
+      "originalPixelsPreserved": "All pixels outside the tracked lower gift wall window"
+    },
     "alphaVerification": {
+      "restorationChecks": {
+        "noIvoryStockingsAcrossFinalGiftWall": true
+      },
+      "minimumSemanticInteriorRetention": null,
       "minimumTailForegroundRetention": 1.0,
       "masterFrames": 240,
       "webpFrames": 240,
@@ -58,11 +81,11 @@
       "maxAdjacentSilhouetteAreaChange": 0.038115417393140005
     },
     "files": {
-      "kitten-last.webp": 184286,
+      "kitten-last.webp": 187534,
       "kitten-first.webp": 176576,
-      "kitten.webm": 3274393,
-      "kitten.mov": 3970271,
-      "kitten.webp": 6925190
+      "kitten.webm": 3278754,
+      "kitten.mov": 3958774,
+      "kitten.webp": 7013628
     }
   },
   "together": {

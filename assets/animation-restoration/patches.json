@@ -1,0 +1,60 @@
+{
+  "paddingTop": 64,
+  "paddingBottom": 56,
+  "patches": {
+    "crown-first": {
+      "file": "crown-first.png",
+      "bounds": [
+        390,
+        15,
+        560,
+        140
+      ]
+    },
+    "crown-last": {
+      "file": "crown-last.png",
+      "bounds": [
+        405,
+        15,
+        550,
+        135
+      ]
+    },
+    "car-bottom": {
+      "file": "car-bottom.png",
+      "bounds": [
+        168,
+        520,
+        363,
+        610
+      ]
+    },
+    "gift-bottom": {
+      "file": "gift-bottom.png",
+      "bounds": [
+        90,
+        520,
+        330,
+        623
+      ]
+    },
+    "star-top": {
+      "file": "star-top.png",
+      "bounds": [
+        735,
+        20,
+        818,
+        110
+      ]
+    },
+    "box-front": {
+      "file": "box-front.png",
+      "bounds": [
+        520,
+        415,
+        650,
+        492
+      ]
+    }
+  }
+}

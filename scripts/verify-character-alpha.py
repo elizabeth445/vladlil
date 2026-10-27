@@ -76,7 +76,25 @@ for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
             coverage = float((alpha[core] > 247).mean())
             interiors.append(coverage)
             assert coverage > .995, f'Character interior lost: {path.name}: {coverage}'
+    refinement = {}
+    if info.get('restoration') and kind == 'lion':
+        for i, path in enumerate(frames):
+            alpha = np.asarray(Image.open(path))[:, :, 3]
+            assert not alpha[0].any() and not alpha[-1].any(), f'Restored object touches camera boundary: {i}'
+            original = np.asarray(Image.open(root / 'rgba' / path.name))
+            restored = np.asarray(Image.open(root / 'refined' / path.name))
+            assert np.array_equal(original, restored[64:568]), f'Unrelated lion pixels changed: {i}'
+        refinement = {'allFramesClearTopAndBottom': True, 'allOriginalLionPixelsPreserved': True}
+    elif info.get('restoration') and kind == 'kitten':
+        for i in range(176, 240):
+            area = np.asarray(Image.open(root / 'refined' / f'{i:04}.png'))[435:480, 540:625]
+            rgb = area[:, :, :3].astype(float)
+            # The old ivory stockings crossed this solid pink front panel.
+            stockings = (rgb.min(2) > 175) & (rgb.max(2) - rgb.min(2) < 30) & (area[:, :, 3] > 200)
+            assert stockings.sum() < 10, f'Protruding doll stockings remain: {i}'
+        refinement = {'noIvoryStockingsAcrossFinalGiftWall': True}
     info['alphaVerification'] = {
+        'restorationChecks': refinement or None,
         'minimumSemanticInteriorRetention': min(interiors) if interiors else None,
         'minimumTailForegroundRetention': min(retained) if retained else None,
         'masterFrames': len(frames), 'webpFrames': animation.n_frames, 'vp9Frames': decoded,

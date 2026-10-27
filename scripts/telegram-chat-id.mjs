@@ -27,7 +27,7 @@ if (!token || !/^\d+:[A-Za-z0-9_-]{30,}$/.test(token)) {
       }
       if (chats.size) {
         for (const chat of chats.values()) console.log(JSON.stringify(chat));
-        console.log('Выберите свой личный чат и добавьте его числовой chatId как TELEGRAM_CHAT_ID в .env.local и Vercel Production.');
+        console.log('Добавьте нужные числовые chatId в TELEGRAM_CHAT_ID в .env.local и Vercel Production. Для нескольких получателей разделите ID запятыми; каждый должен отправить боту /start.');
       } else {
         console.log('Откройте своего бота, отправьте /start и повторите команду один раз. Telegram хранит обновления ограниченное время.');
         process.exitCode = 1;

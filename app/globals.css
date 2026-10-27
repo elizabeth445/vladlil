@@ -1336,15 +1336,6 @@ button:disabled {
   width: 80px;
   margin: 0 auto 10px;
 }
-.success-envelope svg:last-child {
-  position: absolute;
-  left: 26px;
-  top: 23px;
-  color: #fff;
-  background: #91bba6;
-  padding: 4px;
-  border-radius: 50%;
-}
 .letter-success h3 {
   font-size: 29px;
 }
@@ -1381,7 +1372,6 @@ button:disabled {
   font-family: var(--display);
   font-size: 14px;
   color: #a17c64;
-  rotate: -3deg;
   display: block;
 }
 .rsvp-form {

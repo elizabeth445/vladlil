@@ -4,7 +4,6 @@ import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import {
   ArrowRight,
-  Check,
   Heart,
   LoaderCircle,
   Mail,
@@ -105,19 +104,17 @@ function LetterForm({
           tabIndex={-1}
           role="status"
         >
-          <div className="success-envelope">
+          <div className="success-envelope" aria-hidden="true">
             <Mail size={74} />
-            <Check size={24} />
           </div>
           <Character kind={data.art} />
           <h3>
             Теплі слова —<br />у скриньці спогадів
           </h3>
           <p>
-            Дякуємо! Ваш лист для {data.recipient} надіслано організаторам{" "}
-            {child === "vladyslav" ? "💙" : "💗"}
+            Дякуємо! Ваш лист для {data.recipient} надіслано організаторам.
           </p>
-          <button className="button secondary" onClick={onOther}>
+          <button className="button" onClick={onOther}>
             Написати ще один лист <ArrowRight size={17} />
           </button>
         </div>

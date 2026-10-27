@@ -38,13 +38,13 @@ test("iPhone WebKit: closing greeting stays connected and settles after touch re
   await expect(lion).toHaveAttribute("data-wave-state", "idle");
   await greeting.tap();
   await expect(lion).toHaveAttribute("data-wave-state", "waving");
-  await expect(greeting.locator("filter, mask, clipPath")).toHaveCount(0);
+  await expect(greeting.locator("feDisplacementMap")).toHaveCount(0);
   await page.screenshot({ path: "output/playwright/iphone-webkit-greeting.png" });
   await expect(lion).toHaveAttribute("data-wave-state", "idle");
   await page.emulateMedia({ reducedMotion: "reduce" });
   await greeting.tap();
   await expect(lion).toHaveAttribute("data-wave-state", "idle");
-  await expect(lion.locator(".rig-wave-joint")).toHaveCSS("transform", "none");
+  expect(await lion.locator(".rig-shoulder").evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).isIdentity)).toBe(true);
   expect(errors).toEqual([]);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
     390,

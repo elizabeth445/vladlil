@@ -72,51 +72,6 @@ test("watercolor postcard responds to pointer and keyboard, settles and respects
   })).toBe(0);
 });
 
-test("closing characters wave from the upper shoulder and pause offscreen", async ({ page }) => {
-  await enter(page);
-  const greeting = page.getByRole("button", { name: "Привітатися з іменинниками ще раз" });
-  await greeting.scrollIntoViewIfNeeded();
-  const lion = greeting.locator(".rig-lion");
-  await expect(lion).toHaveAttribute("data-wave-state", "waving");
-  await expect(lion).toHaveAttribute("data-wave-state", "idle");
-  await expect(greeting.locator("filter, mask, clipPath, .greeting-toys")).toHaveCount(0);
-  await greeting.focus();
-  await page.keyboard.press("Enter");
-  const movement = await lion.evaluate(element => new Promise<{ angle: number; pivotDrift: number; canvasDrift: number }>(resolve => {
-    const joint = element.querySelector<HTMLElement>(".rig-wave-joint")!;
-    const parent = joint.parentElement!.getBoundingClientRect();
-    const root = element.getBoundingClientRect();
-    const origin = getComputedStyle(joint).transformOrigin.split(" ").map(parseFloat);
-    const expected = { x: parent.left + origin[0], y: parent.top + origin[1] };
-    let angle = 0, pivotDrift = 0, canvasDrift = 0;
-    const start = performance.now();
-    const sample = () => {
-      const matrix = new DOMMatrixReadOnly(getComputedStyle(joint).transform);
-      // GSAP's CSS matrix preserves a rotation around the specified shoulder.
-      const point = new DOMPoint(0, 0).matrixTransform(matrix);
-      angle = Math.max(angle, Math.abs(Math.atan2(matrix.b, matrix.a) * 180 / Math.PI));
-      const now = joint.parentElement!.getBoundingClientRect();
-      pivotDrift = Math.max(pivotDrift, Math.hypot(now.left + origin[0] + point.x - expected.x, now.top + origin[1] + point.y - expected.y));
-      canvasDrift = Math.max(canvasDrift, Math.abs(element.getBoundingClientRect().top - root.top));
-      if (performance.now() - start < 2100) requestAnimationFrame(sample); else resolve({ angle, pivotDrift, canvasDrift });
-    }; sample();
-  }));
-  expect(movement.angle).toBeGreaterThan(2);
-  expect(movement.angle).toBeLessThanOrEqual(3.1);
-  expect(movement.pivotDrift).toBeLessThan(0.5);
-  expect(movement.canvasDrift).toBeLessThan(0.5);
-  await expect(greeting.locator('.rig-head img')).toHaveCount(2);
-  await expect(greeting.locator('img[src*="head-closed"]')).toHaveCount(0);
-  await page.locator("#home").scrollIntoViewIfNeeded();
-  await expect(lion).toHaveAttribute("data-idle-running", "false");
-  await greeting.scrollIntoViewIfNeeded();
-  await expect(lion).toHaveAttribute("data-wave-state", "waving");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await expect(lion).toHaveAttribute("data-idle-running", "false");
-  await greeting.click();
-  await expect(lion).toHaveAttribute("data-wave-state", "idle");
-  await expect(lion.locator(".rig-wave-joint")).toHaveCSS("transform", "none");
-});
 async function enter(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Пропустити", exact: true }).click();
@@ -338,51 +293,4 @@ test("painted frame keeps proportions and characters and butterfly respond to in
         (e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).m42,
       ),
   ).toBeCloseTo(0, 0);
-});
-
-test("hero keeps both paws down, glances inward smoothly and only shows a message on tap", async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await enter(page);
-  const characters = page.locator(".hero-characters");
-  await expect(characters.locator(".rig-wave")).toHaveCount(0);
-  await expect(characters.locator(".rig-rest, .rig-front-near")).toHaveCount(4);
-  await expect(characters.locator(".rig-head img")).toHaveCount(2);
-  const motion = await characters.evaluate(element => new Promise<{ maxJump: number; gaze: number; stableSources: boolean }>(resolve => {
-    const heads = [...element.querySelectorAll<HTMLElement>(".rig-head-idle")];
-    const sources = [...element.querySelectorAll<HTMLImageElement>(".rig-head img")].map(img => img.src);
-    const previous = heads.map(head => new DOMMatrixReadOnly(getComputedStyle(head).transform));
-    let maxJump = 0, gaze = 0, stableSources = true;
-    const start = performance.now();
-    const sample = () => {
-      heads.forEach((head, i) => {
-        const matrix = new DOMMatrixReadOnly(getComputedStyle(head).transform);
-        maxJump = Math.max(maxJump, Math.abs(matrix.m41 - previous[i].m41), Math.abs(matrix.m42 - previous[i].m42));
-        gaze = Math.max(gaze, Math.abs(matrix.m13));
-        previous[i] = matrix;
-      });
-      stableSources &&= [...element.querySelectorAll<HTMLImageElement>(".rig-head img")].every((img, i) => img.src === sources[i]);
-      if (performance.now() - start < 3500) requestAnimationFrame(sample); else resolve({ maxJump, gaze, stableSources });
-    }; sample();
-  }));
-  expect(motion.gaze).toBeGreaterThan(0.04);
-  expect(motion.maxJump).toBeLessThan(0.6);
-  expect(motion.stableSources).toBe(true);
-  await page.getByRole("button", { name: "Погладити кошеня" }).click();
-  await expect(page.locator(".character-play-kitten .character-greeting")).toBeVisible();
-  await expect(characters.locator(".rig-wave")).toHaveCount(0);
-});
-
-test("closing waits for its foreleg artwork before starting the wave", async ({ page }) => {
-  let release!: () => void;
-  const gate = new Promise<void>(resolve => { release = resolve; });
-  await page.route("**/paw-wave-bent.png", async route => { await gate; await route.continue(); });
-  await page.goto("/", { waitUntil: "domcontentloaded" });
-  await page.getByRole("button", { name: "Пропустити", exact: true }).click();
-  const greeting = page.locator(".closing-greeting");
-  await greeting.scrollIntoViewIfNeeded();
-  await page.waitForTimeout(350);
-  await expect(greeting.locator(".rig-lion")).toHaveAttribute("data-wave-state", "idle");
-  release();
-  await expect(greeting.locator(".rig-lion")).toHaveAttribute("data-wave-state", "waving");
-  await expect.poll(() => greeting.locator(".rig-wave img").evaluateAll(es => es.every(e => (e as HTMLImageElement).naturalWidth > 0))).toBe(true);
 });

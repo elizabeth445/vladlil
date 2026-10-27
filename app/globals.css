@@ -1481,13 +1481,6 @@ button:disabled {
   background: transparent;
   border-radius: 35%;
 }
-.greeting-character {
-  width: 50%;
-  aspect-ratio: 1;
-  position: relative;
-  display: block;
-  overflow: hidden;
-}
 .celebration-thread {
   width: 190px;
   height: auto;
@@ -3835,83 +3828,6 @@ button:disabled {
 .hero-characters {
   pointer-events: none;
 }
-.character-play {
-  display: block;
-  width: 100%;
-  position: relative;
-  padding: 0;
-  border: 0;
-  background: none;
-  pointer-events: auto;
-  border-radius: 45%;
-  isolation: isolate;
-  outline-offset: 5px;
-}
-.character-reaction {
-  display: block;
-  transform-origin: 50% 85%;
-}
-.hero-lion-depth .character-reaction > .character {
-  rotate: -5deg;
-}
-.hero-kitten-depth .character-reaction > .character {
-  rotate: 5deg;
-}
-.character-halo {
-  position: absolute;
-  inset: 15% 0 0;
-  border-radius: 50%;
-  background: radial-gradient(ellipse, #efd8ab44, transparent 67%);
-  opacity: 0;
-  transition: opacity 0.3s;
-  z-index: -1;
-}
-.character-play-kitten .character-halo {
-  background: radial-gradient(ellipse, #efc7d966, transparent 67%);
-}
-.character-play:hover .character-halo,
-.character-play:focus-visible .character-halo {
-  opacity: 1;
-}
-.character-greeting {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  width: 100%;
-  padding: 10px 12px;
-  border-radius: 45% 55% 42% 58% / 42% 40% 60% 58%;
-  font-family: var(--display);
-  font-size: clamp(15px, 1.5vw, 20px);
-  line-height: 1.5;
-  color: var(--blue);
-  background: #fff9f1ed;
-  box-shadow: 0 3px 14px #90714b0c;
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-}
-.character-play-kitten .character-greeting {
-  color: #a4516e;
-}
-.greeting-sparks {
-  position: absolute;
-  left: 50%;
-  top: 18%;
-  pointer-events: none;
-}
-.greeting-spark {
-  position: absolute;
-  left: 0;
-  top: 0;
-  opacity: 0;
-  width: 16px;
-  height: 16px;
-  color: #d68aab;
-}
-.greeting-spark svg {
-  width: 16px;
-  height: 16px;
-}
 .butterfly-play {
   border: 0;
   padding: 5px;
@@ -3984,22 +3900,12 @@ button:disabled {
   .envelope-seal {
     top: 67px;
   }
-  .character-greeting {
-    font-size: 15px;
-    padding: 9px 7px;
-    bottom: calc(100% + 6px);
-  }
   .butterfly-play.story-butterfly {
     width: 48px;
     height: 48px;
     left: -3%;
     top: -24px;
   }
-}
-.character-greeting {
-  right: 0;
-  margin-inline: auto;
-  max-width: 280px;
 }
 .butterfly-play.story-butterfly {
   animation: none;
@@ -4650,23 +4556,8 @@ button:disabled {
   z-index: 3;
   margin-top: 0;
 }
-.closing-greeting > .greeting-character {
+.closing-host {
   z-index: 1;
-}
-.greeting-flowers {
-  position: absolute;
-  aspect-ratio: 1;
-  background-image: url("/art/greeting-details.webp");
-  background-size: 200% 100%;
-  background-repeat: no-repeat;
-  pointer-events: none;
-}
-.greeting-flowers {
-  width: 40%;
-  right: -5%;
-  bottom: 7%;
-  background-position: 100% 0;
-  z-index: 0;
 }
 @media (min-width: 768px) and (max-height: 800px) {
   .opening {
@@ -5209,16 +5100,8 @@ button:disabled {
   }
 }
 
-/* All anatomy lives in the SVG's shared 100 × 100 coordinate system. */
-.character-rig { display: block; position: relative; width: 100%; aspect-ratio: 1; pointer-events: none; }
-.rig-artwork { display: block; width: 100%; height: 100%; overflow: visible; visibility: hidden; }
-.character-rig[data-art-ready="true"] .rig-artwork { visibility: visible; }
-.rig-lid-motion, .rig-lash { opacity: 0; }
-.closing-greeting > .greeting-character { width: 50%; overflow: visible; translate: none; }
-.character-reaction > .character-rig { width: 100%; }
 @media (max-width: 767px) {
   .celebration-thread { width: min(80vw, 330px); }
-  .closing-greeting .greeting-lion, .closing-greeting .greeting-kitten { translate: none; }
   .opening { padding-top: max(74px, calc(env(safe-area-inset-top) + 58px)); }
   .opening-caption { margin-top: clamp(0px, 2svh, 20px); }
   .opening-caption p { font-size: clamp(26px, 6.9vw, 32px); line-height: 1.3; margin-bottom: 14px; }
@@ -5258,3 +5141,60 @@ button:disabled {
   max-width: 36rem; margin: 14px auto 0; font-family: var(--body);
   font-size: 14px; line-height: 1.55; color: var(--ink-soft, #79665d); text-align: center;
 }
+
+/* A shared seated baseline and matching silhouettes; the crown stays part of the lion. */
+.hero-lion, .hero-kitten {
+  width: clamp(220px, 26vw, 400px);
+  bottom: 80px;
+  rotate: none;
+}
+.hero-lion { left: 3.5%; }
+.hero-kitten { right: 3.5%; }
+.closing-host {
+  display: grid;
+  grid-template-rows: 3.4em auto;
+  align-items: end;
+  position: relative;
+  width: 50%;
+  min-width: 0;
+  font-size: clamp(14px, 2.5vw, 18px);
+}
+.closing-caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  justify-self: center;
+  width: calc(100% - 16px);
+  max-width: 240px;
+  position: relative;
+  z-index: 2;
+  padding: 8px 6px;
+  border-radius: 45% 55% 42% 58% / 42% 40% 60% 58%;
+  background: #fff9f1ed;
+  font-family: var(--display);
+  line-height: 1.4;
+  text-wrap: balance;
+  color: var(--blue);
+}
+.closing-host-pink .closing-caption { color: var(--pink); }
+@media (max-width: 1100px) {
+  .hero { height: auto; max-height: none; min-height: calc(100svh - 80px); padding-bottom: 28px; }
+  .hero-characters {
+    position: relative;
+    inset: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+    width: min(100%, 560px);
+    max-width: 560px;
+    height: auto;
+    margin: 32px auto 0;
+  }
+  .hero-lion, .hero-kitten { position: relative; inset: auto; width: 100%; max-width: none; }
+  .hero .scroll-cue { position: relative; inset: auto; translate: none; margin: 8px auto 0; }
+}
+
+.seated-character { display: block; position: relative; width: 100%; aspect-ratio: 1; }
+.seated-character img { position: absolute; top: 0; left: 0; width: 100%; height: auto; pointer-events: none; }
+.seated-kitten img { width: 97.5%; left: 1.25%; top: -2%; }

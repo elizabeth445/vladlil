@@ -112,7 +112,7 @@ function LetterForm({
             Теплі слова —<br />у скриньці спогадів
           </h3>
           <p>
-            Дякуємо! Ваш лист для {data.recipient} надіслано організаторам.
+            Дякуємо! Лист надіслано батькам Лілії та Владислава.
           </p>
           <button className="button" onClick={onOther}>
             Написати ще один лист <ArrowRight size={17} />

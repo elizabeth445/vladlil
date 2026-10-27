@@ -22,7 +22,9 @@ test("Telegram text contains every answer, ordered parts, Kyiv timestamp and saf
     const messages = telegramMessages(data, new Date("2026-11-15T14:00:00Z"));
     expect(messages[0]).toContain("16:00:00");
     expect(messages[0]).toContain("Київ");
-    expect(messages[0]).toContain(data.request_id);
+    expect(messages[0]).not.toContain(data.request_id);
+    expect(messages[0]).not.toContain("Номер відповіді");
+    expect(messages[0]).toContain("👤");
     if (type === "rsvp") {
       expect(messages[0]).toContain("Без горіхів");
       expect(messages[0]).toContain("Кількість гостей разом із вами\n3");
@@ -39,7 +41,7 @@ test("Telegram text contains every answer, ordered parts, Kyiv timestamp and saf
   for (const [i, message] of messages.entries()) {
     expect(message.length).toBeLessThanOrEqual(4000);
     expect(message).toContain(`Частина ${i + 1} з ${messages.length}`);
-    expect(message).toContain(long.request_id);
+    expect(message).not.toContain(long.request_id);
   }
   const text = messages.join("\n");
   const positions = CHILDREN.liliia.questions.map(question => text.indexOf(question));

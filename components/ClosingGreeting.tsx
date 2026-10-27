@@ -1,22 +1,16 @@
-"use client";
-
-import { useRef } from "react";
-import LayeredCharacter, { type CharacterHandle } from "./LayeredCharacter";
+import SeatedCharacter from "./SeatedCharacter";
 
 export default function ClosingGreeting() {
-  const lion = useRef<CharacterHandle>(null);
-  const kitten = useRef<CharacterHandle>(null);
-  const greet = () => {
-    lion.current?.wave();
-    kitten.current?.wave();
-  };
   return (
-    <button type="button" className="closing-greeting" onClick={greet}
-      onPointerEnter={event => { if (event.pointerType === "mouse") greet(); }}
-      aria-label="Привітатися з іменинниками ще раз">
-      <span className="greeting-flowers" aria-hidden="true" />
-      <LayeredCharacter ref={lion} kind="lion" className="greeting-character greeting-lion" autoWave />
-      <LayeredCharacter ref={kitten} kind="kitten" className="greeting-character greeting-kitten" autoWave />
-    </button>
+    <div className="closing-greeting">
+      <span className="closing-host">
+        <span className="closing-caption">Радий вас бачити!</span>
+        <SeatedCharacter kind="lion" />
+      </span>
+      <span className="closing-host closing-host-pink">
+        <span className="closing-caption">Мур-р! До зустрічі!</span>
+        <SeatedCharacter kind="kitten" />
+      </span>
+    </div>
   );
 }

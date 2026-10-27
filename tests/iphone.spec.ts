@@ -21,34 +21,23 @@ test("iPhone WebKit: invitation gesture starts music and touch control pauses it
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
 });
 
-test("iPhone WebKit: closing greeting stays connected and settles after touch replay", async ({
-  page,
-}) => {
+test("iPhone WebKit: original seated characters and closing captions stay static", async ({ page }) => {
   const errors: string[] = [];
-  page.on("pageerror", (error) => errors.push(error.message));
+  page.on("pageerror", error => errors.push(error.message));
   await page.goto("/");
   await page.getByRole("button", { name: "Пропустити", exact: true }).tap();
-  await expect(page.getByRole("dialog")).toHaveCount(0);
-  const greeting = page.getByRole("button", {
-    name: "Привітатися з іменинниками ще раз",
-  });
+  await expect(page.locator("#home .closing-caption")).toHaveCount(0);
+  const greeting = page.locator(".closing-greeting");
   await greeting.scrollIntoViewIfNeeded();
-  const lion = greeting.locator(".rig-lion");
-  await expect(lion).toHaveAttribute("data-wave-state", "waving");
-  await expect(lion).toHaveAttribute("data-wave-state", "idle");
+  await expect(greeting.locator(".seated-character")).toHaveCount(2);
+  await expect(greeting).toContainText("Радий вас бачити!");
+  await expect(greeting).toContainText("Мур-р! До зустрічі!");
   await greeting.tap();
-  await expect(lion).toHaveAttribute("data-wave-state", "waving");
-  await expect(greeting.locator("feDisplacementMap")).toHaveCount(0);
+  await expect(greeting.locator("button, .rig-shoulder")).toHaveCount(0);
+  for (const image of await greeting.locator("img").all()) await expect(image).toHaveCSS("transform", "none");
   await page.screenshot({ path: "output/playwright/iphone-webkit-greeting.png" });
-  await expect(lion).toHaveAttribute("data-wave-state", "idle");
-  await page.emulateMedia({ reducedMotion: "reduce" });
-  await greeting.tap();
-  await expect(lion).toHaveAttribute("data-wave-state", "idle");
-  expect(await lion.locator(".rig-shoulder").evaluate(element => new DOMMatrixReadOnly(getComputedStyle(element).transform).isIdentity)).toBe(true);
   expect(errors).toEqual([]);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(
-    390,
-  );
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });
 test("iPhone WebKit: readable introduction, clean paper extraction and touch replay", async ({
   page,

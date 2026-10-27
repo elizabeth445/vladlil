@@ -15,7 +15,8 @@ import {
 import { EVENT } from "@/lib/event";
 import Opening from "./Opening";
 import SplitText from "./SplitText";
-import { PlayfulCharacter, PlayfulButterfly } from "./StorybookPlay";
+import { PlayfulButterfly } from "./StorybookPlay";
+import SeatedCharacter from "./SeatedCharacter";
 import {
   Balloon,
   Butterfly,
@@ -87,12 +88,12 @@ export default function Invitation() {
           )
           .to(
             ".hero-lion-depth",
-            { y: () => (window.innerWidth < 768 ? -82 : -145), rotation: -3 },
+            { y: () => (window.innerWidth <= 1100 ? -12 : -145), rotation: () => window.innerWidth <= 1100 ? 0 : -3 },
             0,
           )
           .to(
             ".hero-kitten-depth",
-            { y: () => (window.innerWidth < 768 ? -104 : -190), rotation: 3 },
+            { y: () => (window.innerWidth <= 1100 ? -12 : -190), rotation: () => window.innerWidth <= 1100 ? 0 : 3 },
             0,
           )
           .to(".hero-spark-depth", { y: mobile ? -95 : -170 }, 0);
@@ -239,10 +240,10 @@ export default function Invitation() {
             </div>
             <div className="hero-characters">
               <div className="hero-lion hero-lion-depth">
-                <PlayfulCharacter kind="lion" priority />
+                <SeatedCharacter kind="lion" priority />
               </div>
               <div className="hero-kitten hero-kitten-depth">
-                <PlayfulCharacter kind="kitten" priority />
+                <SeatedCharacter kind="kitten" priority />
               </div>
             </div>
             <a href="#stories" className="scroll-cue">

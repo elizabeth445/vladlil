@@ -11,18 +11,18 @@ export class TelegramDeliveryError extends Error {
 // Plain text: guest input cannot become Telegram HTML/Markdown or markup links.
 export function telegramMessages(data: Submission, now = new Date()): string[] {
   const title = data.type === "rsvp" ? "🎂 RSVP — підтвердження присутності"
-    : `💌 Анкета гостя для ${CHILDREN[data.type].recipient}`;
+    : `${data.type === "vladyslav" ? "🦁" : "🐱"} Анкета гостя для ${CHILDREN[data.type].recipient}`;
   const name = (data.type === "rsvp" ? data.guest_name : data.answers.identity).replace(/\s+/g, " ");
   const time = new Intl.DateTimeFormat("uk-UA", {
     timeZone: "Europe/Kyiv", dateStyle: "long", timeStyle: "medium",
   }).format(now);
-  const header = `${title}\nГість: ${name}\nНадіслано: ${time} (Київ)\nНомер відповіді: ${data.request_id}`;
+  const header = `${title}\n\n👤 Гість: ${name}\n🕒 Надіслано: ${time} (Київ)`;
   const blocks = data.type === "rsvp" ? [
-    `Ім’я та прізвище\n${data.guest_name}`,
-    `Чи будете ви на святі?\n${data.attending ? "Так, із радістю!" : "На жаль, не зможу"}`,
-    `Кількість гостей разом із вами\n${data.attending ? data.guests : 0}`,
-    `Коментар\n${data.comment || "Не вказано"}`,
-  ] : answerKeys.map((key, index) => `${index + 1}. ${CHILDREN[data.type as "vladyslav" | "liliia"].questions[index]}\n${data.answers[key]}`);
+    `👤 Ім’я та прізвище\n${data.guest_name}`,
+    `📅 Чи будете ви на святі?\n${data.attending ? "Так, із радістю!" : "На жаль, не зможу"}`,
+    `👥 Кількість гостей разом із вами\n${data.attending ? data.guests : 0}`,
+    `💬 Коментар\n${data.comment || "Не вказано"}`,
+  ] : answerKeys.map((key, index) => `${["👋", "👨‍👩‍👧‍👦", "✨", "🌟", "💌"][index]} ${CHILDREN[data.type as "vladyslav" | "liliia"].questions[index]}\n${data.answers[key]}`);
   // A whole answer (max 1500 UTF-16 units) fits in one part. Pack complete
   // questions in order, leaving room for the repeated header and part count.
   const budget = 4000 - header.length - 40;
@@ -36,7 +36,7 @@ export function telegramMessages(data: Submission, now = new Date()): string[] {
     current += `${current ? "\n\n" : ""}${block}`;
   }
   if (current) parts.push(current);
-  return parts.map((part, i) => `${header}\nЧастина ${i + 1} з ${parts.length}\n\n${part}`);
+  return parts.map((part, i) => `${header}${parts.length > 1 ? `\n📄 Частина ${i + 1} з ${parts.length}` : ""}\n\n${part}`);
 }
 
 // Credentials are passed only by the Node route, never read by client modules.

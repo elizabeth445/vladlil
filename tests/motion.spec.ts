@@ -138,8 +138,8 @@ test("hero parallax moves layers at different speeds and resets on reverse scrol
     };
   });
   expect(motion.air).toBeLessThan(motion.cloud);
-  expect(motion.kitten).toBeLessThan(motion.lion);
-  expect(motion.lion).toBeLessThan(-5);
+  expect(motion.kitten).toBeCloseTo(motion.lion, 1);
+  expect(motion.lion).toBeLessThan(-1);
   await page.evaluate(() => scrollTo({ top: 0, behavior: "instant" }));
   await page.waitForTimeout(900);
   expect(
@@ -250,7 +250,7 @@ test("desktop paper never intersects the dedication, including short windows", a
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
 });
-test("painted frame keeps proportions and characters and butterfly respond to input", async ({
+test("painted frame keeps proportions, greetings move to closing and butterfly responds to input", async ({
   page,
 }) => {
   await enter(page);
@@ -268,14 +268,8 @@ test("painted frame keeps proportions and characters and butterfly respond to in
       await page.evaluate(() => document.documentElement.scrollWidth),
     ).toBe(width);
   }
-  await page.getByRole("button", { name: "Привітатися з левеням" }).click();
-  await expect(
-    page.locator(".character-play-lion .character-greeting"),
-  ).toBeVisible();
-  await page.getByRole("button", { name: "Погладити кошеня" }).click();
-  await expect(
-    page.locator(".character-play-kitten .character-greeting"),
-  ).toBeVisible();
+  await expect(page.locator("#home .character-greeting")).toHaveCount(0);
+  await expect(page.locator(".closing-caption")).toHaveText(["Радий вас бачити!", "Мур-р! До зустрічі!"]);
   await page.getByRole("button", { name: "Пограти з метеликом" }).click();
   await page.waitForTimeout(350);
   expect(

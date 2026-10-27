@@ -1,10 +1,8 @@
 "use client";
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
-import { Heart } from "lucide-react";
-import { Butterfly, Star } from "./Artwork";
-import LayeredCharacter from "./LayeredCharacter";
+import { Butterfly } from "./Artwork";
 gsap.registerPlugin(useGSAP);
 
 function useMotionPreference(
@@ -18,87 +16,6 @@ function useMotionPreference(
     query.addEventListener("change", finish);
     return () => query.removeEventListener("change", finish);
   }, [animation]);
-}
-
-export function PlayfulCharacter({
-  kind,
-  priority = false,
-}: {
-  kind: "lion" | "kitten";
-  priority?: boolean;
-}) {
-  const root = useRef<HTMLButtonElement>(null);
-  const animation = useRef<gsap.core.Timeline | null>(null);
-  const messageId = useId();
-  const { contextSafe } = useGSAP({ scope: root });
-  useMotionPreference(animation);
-  const greet = () =>
-    contextSafe(() => {
-      animation.current?.kill();
-      const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const timeline = gsap.timeline();
-      animation.current = timeline;
-      gsap.set(".greeting-spark", { x: 0, y: 0, opacity: 0, scale: 0.5 });
-      timeline.fromTo(
-        ".character-greeting",
-        { autoAlpha: 0, y: 6 },
-        { autoAlpha: 1, y: 0, duration: reduced ? 0 : 0.25 },
-        0,
-      );
-      if (!reduced) {
-        timeline
-          .to(
-            ".greeting-spark",
-            {
-              x: (i) => (i - 2) * 24,
-              y: (i) => -25 - (2 - Math.abs(i - 2)) * 20,
-              scale: 1,
-              opacity: 1,
-              stagger: 0.04,
-              duration: 0.4,
-              ease: "power2.out",
-            },
-            0.12,
-          )
-          .to(
-            ".greeting-spark",
-            { y: "-=25", opacity: 0, scale: 0.7, duration: 0.6 },
-            0.6,
-          );
-      }
-      timeline.to(
-        ".character-greeting",
-        { autoAlpha: 0, y: reduced ? 0 : -4, duration: reduced ? 0 : 0.35 },
-        2.1,
-      );
-    })();
-  return (
-    <button
-      ref={root}
-      type="button"
-      className={`character-play character-play-${kind}`}
-      aria-label={
-        kind === "lion" ? "Привітатися з левеням" : "Погладити кошеня"
-      }
-      aria-describedby={messageId}
-      onClick={greet}
-    >
-      <span className="character-greeting" id={messageId}>
-        {kind === "lion" ? "Радий вас бачити!" : "Мур-р! До зустрічі!"}
-      </span>
-      <span className="character-halo" aria-hidden="true" />
-      <span className="character-reaction">
-        <LayeredCharacter kind={kind} priority={priority} />
-      </span>
-      <span className="greeting-sparks" aria-hidden="true">
-        {Array.from({ length: 5 }, (_, i) => (
-          <span className="greeting-spark" key={i}>
-            {kind === "lion" ? <Star /> : <Heart fill="currentColor" />}
-          </span>
-        ))}
-      </span>
-    </button>
-  );
 }
 
 export function PlayfulButterfly({ className = "" }: { className?: string }) {

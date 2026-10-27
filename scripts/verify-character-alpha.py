@@ -16,6 +16,46 @@ parser.add_argument('--kind', choices=['lion', 'kitten', 'together'])
 args = parser.parse_args()
 report = {}
 photo = Image.open('public/art/franco.webp').convert('RGB')
+
+
+def verify_crown_attachment(root):
+    """Measure the rendered gold against the independently tracked head pose."""
+    poses = np.load(root / 'head-attachment.npz')
+    matrices = poses['matrices']
+    sift = cv2.SIFT_create(nfeatures=2500, contrastThreshold=.008)
+    first = np.asarray(Image.open(root / 'refined/0000.png'))
+    mask = np.zeros(first.shape[:2], np.uint8)
+    mask[14:136, 390:552] = 255
+    keypoints, description = sift.detectAndCompute(cv2.cvtColor(first[:, :, :3], cv2.COLOR_RGB2GRAY), mask)
+
+    def padded(matrix):
+        result = np.eye(3); result[:2] = matrix
+        result[1, 2] += 64
+        result[:2, 2] -= result[:2, :2] @ np.array([0, 64])
+        return result
+
+    inverse = np.linalg.inv(padded(matrices[0]))
+    errors, counts = [], []
+    for i, matrix in enumerate(matrices):
+        frame = np.asarray(Image.open(root / 'refined' / f'{i:04}.png'))
+        relative = (padded(matrix) @ inverse)[:2]
+        region = cv2.warpAffine(mask, relative, (896, 624))
+        points, desc = sift.detectAndCompute(cv2.cvtColor(frame[:, :, :3], cv2.COLOR_RGB2GRAY), region)
+        good = [m for m, n in cv2.BFMatcher().knnMatch(description, desc, k=2) if m.distance < .72 * n.distance]
+        a = np.float32([keypoints[m.queryIdx].pt for m in good])
+        b = np.float32([points[m.trainIdx].pt for m in good])
+        _, inliers = cv2.estimateAffinePartial2D(a, b, method=cv2.RANSAC, ransacReprojThreshold=1)
+        assert inliers is not None and inliers.sum() >= 24, f'Crown no longer readable: {i}'
+        predicted = cv2.transform(a[:, None, :], relative)[:, 0, :]
+        error = float(np.median(np.linalg.norm(predicted[inliers[:, 0] > 0] - b[inliers[:, 0] > 0], axis=1)))
+        assert error < .75, f'Crown slides relative to head: {i}: {error}px'
+        errors.append(error); counts.append(int(inliers.sum()))
+    maximum_turn = float(np.degrees(np.abs(np.diff(poses['angle']))).max())
+    assert maximum_turn < 3, f'Abrupt crown/head rotation: {maximum_turn}'
+    return {'maximumRenderedCrownMedianDriftPx': max(errors), 'minimumRenderedCrownFeatureMatches': min(counts),
+            'minimumHeadFeatureInliers': int(poses['inliers'].min()), 'maximumAdjacentRotationDegrees': maximum_turn}
+
+
 for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
     root = work / kind
     info = json.loads((root / 'report.json').read_text())
@@ -94,6 +134,7 @@ for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
         refinement = {'allFramesClearTopAndBottom': True, 'originalFaceAndChestPixelsPreserved': True,
                       'accessoriesRenderedWholeAcrossFormerCameraBoundary': True,
                       'maximumStarMedianColorStepAtFormerJoin': max(star_steps)}
+        refinement['rigidCrownAttachment'] = verify_crown_attachment(root)
     elif info.get('restoration') and kind == 'kitten':
         for i in range(176, 240):
             area = np.asarray(Image.open(root / 'refined' / f'{i:04}.png'))[435:480, 540:625]

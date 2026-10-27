@@ -17,7 +17,7 @@
     "restoration": {
       "tool": "Built-in imagegen; localized transparent patches only",
       "patches": "assets/animation-restoration/patches.json",
-      "tracking": "SIFT + RANSAC similarity; temporally smoothed anchors",
+      "tracking": "Nearby head-feature SIFT/RANSAC; rigid crown attachment with smoothed head pose",
       "scope": "Whole crown, star and car; broad feathered gift-panel overlap",
       "originalPixelsPreserved": "Original character outside accessory repair windows"
     },
@@ -26,7 +26,13 @@
         "allFramesClearTopAndBottom": true,
         "originalFaceAndChestPixelsPreserved": true,
         "accessoriesRenderedWholeAcrossFormerCameraBoundary": true,
-        "maximumStarMedianColorStepAtFormerJoin": 3.0
+        "maximumStarMedianColorStepAtFormerJoin": 3.0,
+        "rigidCrownAttachment": {
+          "maximumRenderedCrownMedianDriftPx": 0.1731281876564026,
+          "minimumRenderedCrownFeatureMatches": 62,
+          "minimumHeadFeatureInliers": 21,
+          "maximumAdjacentRotationDegrees": 1.2813758590052078
+        }
       },
       "minimumSemanticInteriorRetention": null,
       "minimumTailForegroundRetention": null,
@@ -36,14 +42,14 @@
       "webpDurationMs": 9999,
       "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
       "allMasterFramesHaveAntialiasedEdges": true,
-      "maxAdjacentSilhouetteAreaChange": 0.032188280587574766
+      "maxAdjacentSilhouetteAreaChange": 0.03305947866864502
     },
     "files": {
-      "lion-first.webp": 316282,
-      "lion-last.webp": 294818,
-      "lion.mov": 3733737,
-      "lion.webp": 8006344,
-      "lion.webm": 3436713
+      "lion-first.webp": 315912,
+      "lion-last.webp": 297826,
+      "lion.mov": 3650799,
+      "lion.webp": 8064504,
+      "lion.webm": 3300375
     }
   },
   "kitten": {

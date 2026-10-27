@@ -58,6 +58,50 @@ def tracks(frames, reference, roi, search):
     return result, counts
 
 
+def head_attachment(frames):
+    """A rigid crown follows the head, never the AI crown's changing outline.
+
+    Nearby eight-frame references retain fur/face correspondences during the
+    turn. Matching every pose directly to frame zero loses almost all of those
+    features and mistakes changing crown points for head movement.
+    """
+    features = [descriptors(frame, (310, 70, 730, 290)) for frame in frames]
+    poses, counts = [], []
+    for i, (points, desc) in enumerate(features):
+        reference = max(0, ((i - 1) // 8) * 8)
+        keypoints, description = features[reference]
+        good = [m for m, n in cv2.BFMatcher().knnMatch(description, desc, k=2)
+                if m.distance < .72 * n.distance]
+        assert len(good) >= 12, f'Insufficient head features on frame {i}'
+        matrix, valid = cv2.estimateAffinePartial2D(
+            np.float32([keypoints[m.queryIdx].pt for m in good]),
+            np.float32([points[m.trainIdx].pt for m in good]),
+            method=cv2.RANSAC, ransacReprojThreshold=1.5)
+        count = int(valid.sum()) if valid is not None else 0
+        assert matrix is not None and count >= 12, f'Unreliable head pose on frame {i}'
+        local = np.eye(3); local[:2] = matrix
+        poses.append(local @ (poses[reference] if reference else np.eye(3)))
+        counts.append(count)
+
+    poses = np.asarray(poses)
+    # Smooth physical pose parameters, not affine coefficients: this retains
+    # a true rotation/uniform scale with no shear or independent crown wobble.
+    angle = gaussian_filter1d(np.unwrap(np.arctan2(poses[:, 1, 0], poses[:, 0, 0])), 2)
+    scale = np.exp(gaussian_filter1d(np.log(np.hypot(poses[:, 0, 0], poses[:, 1, 0])), 2))
+    seat = np.array([485., 65.])
+    anchors = np.einsum('nij,j->ni', poses[:, :2], np.r_[seat, 1])
+    anchors = gaussian_filter1d(anchors, 2, axis=0)
+    result = np.zeros((len(frames), 2, 3))
+    result[:, 0, 0] = result[:, 1, 1] = scale * np.cos(angle)
+    result[:, 1, 0] = scale * np.sin(angle)
+    result[:, 0, 1] = -result[:, 1, 0]
+    result[:, :, 2] = anchors - np.einsum('nij,j->ni', result[:, :, :2], seat)
+    folder = WORK / 'lion'
+    np.savez(folder / 'head-attachment.npz', matrices=result, inliers=counts,
+             seat=seat, anchors=anchors, angle=angle, scale=scale)
+    return result, counts
+
+
 def patch(name, matrix, size, padded=True):
     info = CONFIG['patches'][name]
     image = read(PATCHES / info['file']).astype(np.float32) / 255
@@ -109,21 +153,28 @@ def replace(base, layer, mask):
 def lion():
     root = WORK / 'lion'
     frames = [read(root / 'rgba' / f'{i:04}.png') for i in range(240)]
-    first, a = tracks(frames, 0, (395, 0, 550, 75), (330, 0, 620, 105))
+    first, a = head_attachment(frames)
+    # Crown-only tracks are used solely to erase the old gold. They never
+    # position the replacement or change its fixed attachment to the head.
+    old_first, _ = tracks(frames, 0, (395, 0, 550, 75), (330, 0, 620, 105))
     former, _ = tracks(frames, 239, (410, 0, 550, 72), (330, 0, 620, 105))
     cars, c = tracks(frames, 239, (175, 415, 355, 504), (120, 310, 440, 504))
     gifts, d = tracks(frames, 0, (100, 385, 315, 504), (75, 350, 370, 504))
     identity = np.float64([[1, 0, 0], [0, 1, 0]])
+    crown_outline = [(394, 65), (420, 63), (429, 72), (440, 33), (469, 30), (479, 46),
+                     (484, 22), (511, 22), (519, 58), (542, 87), (547, 110), (452, 149),
+                     (430, 125), (414, 111), (395, 93)]
     folder = root / 'refined'; folder.mkdir(exist_ok=True)
     for i, frame in enumerate(frames):
         canvas = np.zeros((504 + TOP + BOTTOM, 896, 4), np.uint8)
         canvas[TOP:TOP + 504] = frame
         size = (896, canvas.shape[0])
         crown = patch('crown-whole', first[i], size)
-        crown_mask = window(first[i], size, [(394, 65), (420, 63), (429, 72), (440, 33), (469, 30), (479, 46), (484, 22), (511, 22), (519, 58), (542, 87), (547, 110), (452, 149), (430, 125), (414, 111), (395, 93)], 5)
+        crown_mask = window(first[i], size, crown_outline, 5)
         # The AI source changes the crown's silhouette as the head turns.
         # Clear that former outline too, so no old squared-off point peeks out.
         crown_mask = np.maximum(crown_mask, window(former[i], size, [(411, 45), (549, 45), (549, 116), (438, 149), (411, 130)], 8))
+        crown_mask = np.maximum(crown_mask, window(old_first[i], size, crown_outline, 5))
         canvas = replace(canvas, crown, crown_mask)
         star = patch('star-whole', identity, size)
         canvas = replace(canvas, star, window(identity, size, [(730, 20), (825, 20), (825, 115), (730, 115)], 8))
@@ -138,7 +189,7 @@ def lion():
         car_mask = window(cars[i], size, [(165, 545), (171, 511), (204, 500), (211, 469), (235, 459), (304, 459), (331, 477), (342, 510), (363, 528), (363, 577), (340, 595), (235, 601), (170, 573)], 6)
         canvas = replace(canvas, car, car_mask * fade((i - 100) / 24))
         Image.fromarray(canvas).save(folder / f'{i:04}.png')
-    return {'crownMinimumInliers': min(a), 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
+    return {'headMinimumInliers': min(a), 'crownAttachment': 'Fixed rigid pose in head-local coordinates', 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
 
 
 def kitten():
@@ -184,7 +235,7 @@ def export(kinds):
         report['restoration'] = {
             'tool': 'Built-in imagegen; localized transparent patches only',
             'patches': 'assets/animation-restoration/patches.json',
-            'tracking': 'SIFT + RANSAC similarity; temporally smoothed anchors',
+            'tracking': 'Nearby head-feature SIFT/RANSAC; rigid crown attachment with smoothed head pose' if kind == 'lion' else 'SIFT + RANSAC similarity; temporally smoothed anchors',
             'scope': 'Whole crown, star and car; broad feathered gift-panel overlap' if kind == 'lion' else 'Doll feet replaced by the tracked front gift wall before they emerge',
             'originalPixelsPreserved': 'Original character outside accessory repair windows' if kind == 'lion' else 'All pixels outside the tracked lower gift wall window',
         }

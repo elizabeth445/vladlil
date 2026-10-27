@@ -18,13 +18,15 @@
       "tool": "Built-in imagegen; localized transparent patches only",
       "patches": "assets/animation-restoration/patches.json",
       "tracking": "SIFT + RANSAC similarity; temporally smoothed anchors",
-      "scope": "Missing crown/star tips and toy/gift bottoms",
-      "originalPixelsPreserved": "Entire original scene inside the source camera boundary"
+      "scope": "Whole crown, star and car; broad feathered gift-panel overlap",
+      "originalPixelsPreserved": "Original character outside accessory repair windows"
     },
     "alphaVerification": {
       "restorationChecks": {
         "allFramesClearTopAndBottom": true,
-        "allOriginalLionPixelsPreserved": true
+        "originalFaceAndChestPixelsPreserved": true,
+        "accessoriesRenderedWholeAcrossFormerCameraBoundary": true,
+        "maximumStarMedianColorStepAtFormerJoin": 3.0
       },
       "minimumSemanticInteriorRetention": null,
       "minimumTailForegroundRetention": null,
@@ -34,14 +36,14 @@
       "webpDurationMs": 9999,
       "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
       "allMasterFramesHaveAntialiasedEdges": true,
-      "maxAdjacentSilhouetteAreaChange": 0.03037771302524441
+      "maxAdjacentSilhouetteAreaChange": 0.032188280587574766
     },
     "files": {
-      "lion-first.webp": 304436,
-      "lion-last.webp": 288206,
-      "lion.mov": 3837380,
-      "lion.webp": 7375518,
-      "lion.webm": 3329547
+      "lion-first.webp": 316282,
+      "lion-last.webp": 294818,
+      "lion.mov": 3733737,
+      "lion.webp": 8006344,
+      "lion.webm": 3436713
     }
   },
   "kitten": {

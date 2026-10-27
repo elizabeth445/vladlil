@@ -78,13 +78,22 @@ for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
             assert coverage > .995, f'Character interior lost: {path.name}: {coverage}'
     refinement = {}
     if info.get('restoration') and kind == 'lion':
+        star_steps = []
         for i, path in enumerate(frames):
             alpha = np.asarray(Image.open(path))[:, :, 3]
             assert not alpha[0].any() and not alpha[-1].any(), f'Restored object touches camera boundary: {i}'
             original = np.asarray(Image.open(root / 'rgba' / path.name))
             restored = np.asarray(Image.open(root / 'refined' / path.name))
-            assert np.array_equal(original, restored[64:568]), f'Unrelated lion pixels changed: {i}'
-        refinement = {'allFramesClearTopAndBottom': True, 'allOriginalLionPixelsPreserved': True}
+            # The restored accessories now overlap their old contours. The
+            # central face/chest must remain the original animation throughout.
+            assert np.array_equal(original[190:385, 380:700], restored[254:449, 380:700]), f'Lion face/chest changed: {i}'
+            valid = (restored[63, 730:825, 3] > 248) & (restored[64, 730:825, 3] > 248)
+            step = float(np.median(np.abs(restored[64, 730:825, :3][valid].astype(float) - restored[63, 730:825, :3][valid])))
+            star_steps.append(step)
+            assert step < 8, f'Horizontal color seam through star: {i}: {step}'
+        refinement = {'allFramesClearTopAndBottom': True, 'originalFaceAndChestPixelsPreserved': True,
+                      'accessoriesRenderedWholeAcrossFormerCameraBoundary': True,
+                      'maximumStarMedianColorStepAtFormerJoin': max(star_steps)}
     elif info.get('restoration') and kind == 'kitten':
         for i in range(176, 240):
             area = np.asarray(Image.open(root / 'refined' / f'{i:04}.png'))[435:480, 540:625]

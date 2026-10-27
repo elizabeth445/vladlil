@@ -1,6 +1,6 @@
 """Tracked local repairs of the existing transparent video masters.
 The source MP4s and original rgba/ frames are never overwritten. Restored
-patches contain only crown tips, toy/gift bottoms and the doll's box wall.
+patches contain whole accessories, the gift base and the doll's box wall.
 """
 import argparse
 import json
@@ -76,22 +76,41 @@ def patch(name, matrix, size, padded=True):
     return np.uint8(np.clip(pixels, 0, 1) * 255)
 
 
-def composite(base, overlay, weight):
-    overlay = overlay.copy()
-    overlay[:, :, 3] = np.uint8(overlay[:, :, 3].astype(float) * weight)
-    return np.asarray(Image.alpha_composite(Image.fromarray(base), Image.fromarray(overlay)))
-
-
 def fade(value):
     value = np.clip(value, 0, 1)
     return value * value * (3 - 2 * value)
+
+
+def window(matrix, size, polygon, feather=8):
+    """Object-space replacement window; never splits a restored surface."""
+    mask = np.zeros((624, 896), np.uint8)
+    cv2.fillPoly(mask, [np.int32(polygon)], 1)
+    distance = cv2.distanceTransform(mask, cv2.DIST_L2, 5)
+    mask = fade(distance / feather).astype(np.float32)
+    transform = matrix.copy()
+    transform[:, 2] -= matrix[:, :2] @ np.array([0, TOP])
+    transform[1, 2] += TOP
+    return cv2.warpAffine(mask, transform, size, flags=cv2.INTER_LINEAR)
+
+
+def replace(base, layer, mask):
+    # Interpolate premultiplied color AND coverage, clearing the old silhouette
+    # where needed. Alpha-over would retain ghosts of the former cut contour.
+    a, b = base.astype(np.float32) / 255, layer.astype(np.float32) / 255
+    a[:, :, :3] *= a[:, :, 3:4]
+    b[:, :, :3] *= b[:, :, 3:4]
+    result = a * (1 - mask[:, :, None]) + b * mask[:, :, None]
+    np.divide(result[:, :, :3], result[:, :, 3:4], out=result[:, :, :3], where=result[:, :, 3:4] > 1e-6)
+    result = np.uint8(np.rint(np.clip(result, 0, 1) * 255))
+    result[mask <= 1e-6] = base[mask <= 1e-6]
+    return result
 
 
 def lion():
     root = WORK / 'lion'
     frames = [read(root / 'rgba' / f'{i:04}.png') for i in range(240)]
     first, a = tracks(frames, 0, (395, 0, 550, 75), (330, 0, 620, 105))
-    last, b = tracks(frames, 239, (410, 0, 550, 72), (330, 0, 620, 105))
+    former, _ = tracks(frames, 239, (410, 0, 550, 72), (330, 0, 620, 105))
     cars, c = tracks(frames, 239, (175, 415, 355, 504), (120, 310, 440, 504))
     gifts, d = tracks(frames, 0, (100, 385, 315, 504), (75, 350, 370, 504))
     identity = np.float64([[1, 0, 0], [0, 1, 0]])
@@ -99,21 +118,27 @@ def lion():
     for i, frame in enumerate(frames):
         canvas = np.zeros((504 + TOP + BOTTOM, 896, 4), np.uint8)
         canvas[TOP:TOP + 504] = frame
-        # Existing pixels remain above the added fragments; only the missing
-        # areas beyond the old camera boundary receive restored artwork.
-        weight = fade((i - 56) / 40)
-        for name, matrix, opacity in [('crown-first', first[i], 1 - weight), ('crown-last', last[i], weight), ('star-top', identity, 1)]:
-            layer = patch(name, matrix, (896, canvas.shape[0]))
-            layer[TOP:] = 0
-            canvas = composite(canvas, layer, opacity)
-        bottom = np.zeros_like(canvas)
-        for name, matrix, opacity in [('gift-bottom', gifts[i], 1 - fade((i - 72) / 24)), ('car-bottom', cars[i], fade((i - 100) / 24))]:
-            layer = patch(name, matrix, (896, canvas.shape[0]))
-            layer[:TOP + 504] = 0
-            bottom = composite(bottom, layer, opacity)
-        canvas = np.asarray(Image.alpha_composite(Image.fromarray(bottom), Image.fromarray(canvas)))
+        size = (896, canvas.shape[0])
+        crown = patch('crown-whole', first[i], size)
+        crown_mask = window(first[i], size, [(394, 65), (420, 63), (429, 72), (440, 33), (469, 30), (479, 46), (484, 22), (511, 22), (519, 58), (542, 87), (547, 110), (452, 149), (430, 125), (414, 111), (395, 93)], 5)
+        # The AI source changes the crown's silhouette as the head turns.
+        # Clear that former outline too, so no old squared-off point peeks out.
+        crown_mask = np.maximum(crown_mask, window(former[i], size, [(411, 45), (549, 45), (549, 116), (438, 149), (411, 130)], 8))
+        canvas = replace(canvas, crown, crown_mask)
+        star = patch('star-whole', identity, size)
+        canvas = replace(canvas, star, window(identity, size, [(730, 20), (825, 20), (825, 115), (730, 115)], 8))
+        # Blend the gift in a broad overlap on its paper panels. The former
+        # camera edge is fully inside the replacement, with no hard row cut.
+        gift = patch('gift-bottom', gifts[i], size)
+        gift_mask = window(gifts[i], size, [(90, 520), (330, 520), (330, 624), (90, 624)], 10)
+        yy, _ = np.mgrid[:canvas.shape[0], :896]
+        gift_mask *= fade((yy - (TOP + 504 - 38)) / 30)
+        canvas = replace(canvas, gift, gift_mask * (1 - fade((i - 72) / 24)))
+        car = patch('car-whole', cars[i], size)
+        car_mask = window(cars[i], size, [(165, 545), (171, 511), (204, 500), (211, 469), (235, 459), (304, 459), (331, 477), (342, 510), (363, 528), (363, 577), (340, 595), (235, 601), (170, 573)], 6)
+        canvas = replace(canvas, car, car_mask * fade((i - 100) / 24))
         Image.fromarray(canvas).save(folder / f'{i:04}.png')
-    return {'crownFirstMinimumInliers': min(a), 'crownLastMinimumInliers': min(b), 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
+    return {'crownMinimumInliers': min(a), 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
 
 
 def kitten():
@@ -144,9 +169,11 @@ def kitten():
     return {'boxMinimumInliersAfter128': min(counts[128:])}
 
 
-def export():
+def export(kinds):
     encode = runpy.run_path(str(Path(__file__).with_name('prepare-character-videos.py')))['encode_scene']
     for kind, crop in [('lion', (18, 0, 818, 624)), ('kitten', (138, 28, 796, 500))]:
+        if kind not in kinds:
+            continue
         root = WORK / kind
         final = root / 'final'
         for i in range(240):
@@ -158,8 +185,8 @@ def export():
             'tool': 'Built-in imagegen; localized transparent patches only',
             'patches': 'assets/animation-restoration/patches.json',
             'tracking': 'SIFT + RANSAC similarity; temporally smoothed anchors',
-            'scope': 'Missing crown/star tips and toy/gift bottoms' if kind == 'lion' else 'Doll feet replaced by the tracked front gift wall before they emerge',
-            'originalPixelsPreserved': 'Entire original scene inside the source camera boundary' if kind == 'lion' else 'All pixels outside the tracked lower gift wall window',
+            'scope': 'Whole crown, star and car; broad feathered gift-panel overlap' if kind == 'lion' else 'Doll feet replaced by the tracked front gift wall before they emerge',
+            'originalPixelsPreserved': 'Original character outside accessory repair windows' if kind == 'lion' else 'All pixels outside the tracked lower gift wall window',
         }
         (root / 'report.json').write_text(json.dumps(report, indent=2))
 
@@ -167,9 +194,11 @@ def export():
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--export-only', action='store_true')
+    parser.add_argument('--kind', choices=['lion', 'kitten'])
     args = parser.parse_args()
+    kinds = [args.kind] if args.kind else ['lion', 'kitten']
     if not args.export_only:
-        report = {'lion': lion(), 'kitten': kitten()}
+        report = {kind: (lion if kind == 'lion' else kitten)() for kind in kinds}
         Path('output/story-refinement/tracking.json').write_text(json.dumps(report, indent=2))
         print(json.dumps(report), flush=True)
-    export()
+    export(kinds)

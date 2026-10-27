@@ -9,11 +9,13 @@ import { SplitText as GSAPSplitText } from "gsap/SplitText";
 import { useGSAP } from "@gsap/react";
 
 gsap.registerPlugin(GSAPSplitText, useGSAP);
-export default function SplitText({ text, active, className = "", delay = 32 }: {
+export default function SplitText({ text, active, className = "", delay = 32, settled = false, morphKey }: {
   text: string;
   active: boolean;
   className?: string;
   delay?: number;
+  settled?: boolean;
+  morphKey?: string;
 }) {
   const root = useRef<HTMLSpanElement>(null);
   const [fontsReady, setFontsReady] = useState(false);
@@ -28,6 +30,10 @@ export default function SplitText({ text, active, className = "", delay = 32 }: 
     const mm = gsap.matchMedia();
     mm.add("(prefers-reduced-motion: no-preference)", () => {
       const split = new GSAPSplitText(element, { type: "chars", charsClass: "split-char", smartWrap: true });
+      if (settled) {
+        element.dataset.revealState = "complete";
+        return () => { split.revert(); element.dataset.revealState = "idle"; };
+      }
       const tween = gsap.fromTo(split.chars,
         { opacity: 0, y: 14 },
         { opacity: 1, y: 0, duration: 0.65, ease: "power3.out", stagger: delay / 1000,
@@ -38,6 +44,6 @@ export default function SplitText({ text, active, className = "", delay = 32 }: 
       return () => { tween.kill(); split.revert(); element.dataset.revealState = "idle"; };
     });
     return () => mm.revert();
-  }, { scope: root, dependencies: [active, fontsReady, text, delay], revertOnUpdate: true });
-  return <span ref={root} className={`split-parent ${className}`} data-reveal-state="idle">{text}</span>;
+  }, { scope: root, dependencies: [active, fontsReady, text, delay, settled], revertOnUpdate: true });
+  return <span ref={root} className={`split-parent ${className}`} data-morph={morphKey} data-reveal-state="idle">{text}</span>;
 }

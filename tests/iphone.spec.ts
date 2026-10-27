@@ -1,5 +1,22 @@
 import { test, expect } from "@playwright/test";
 
+test("iPhone WebKit: shared names and animals fly into the hero without a second reveal", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).tap();
+  await expect(page.locator(".invitation-morph-item")).toHaveCount(7);
+  await page.waitForTimeout(650);
+  expect(await page.locator(".invitation-morph-item").evaluateAll(elements =>
+    elements.every(element => element.getBoundingClientRect().width > 8),
+  )).toBe(true);
+  await page.screenshot({ path: "output/playwright/iphone-webkit-morph-flight.png" });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".invitation-morph")).toHaveCount(0);
+  await expect(page.locator(".hero-names > span").first()).toHaveAttribute("data-reveal-state", "complete");
+  expect(await page.locator("#home [data-morph]").evaluateAll(elements =>
+    elements.every(element => getComputedStyle(element).visibility === "visible"),
+  )).toBe(true);
+});
+
 test("iPhone WebKit: invitation gesture starts music and touch control pauses it", async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem("invitation-music-muted", "true"));
   await page.emulateMedia({ reducedMotion: "reduce" });

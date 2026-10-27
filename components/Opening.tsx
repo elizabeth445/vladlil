@@ -1,14 +1,15 @@
 "use client";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Heart, ArrowRight } from "lucide-react";
 import { Character, Star, Butterfly, Balloon } from "./Artwork";
 import OpeningArrival from "./OpeningArrival";
 import { MusicToggle } from "./BackgroundMusic";
+import { createOpeningMorph, prepareOpeningMorph } from "@/lib/opening-morph";
 gsap.registerPlugin(useGSAP);
 export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicToggle }: {
-  onOpened: () => void;
+  onOpened: (morphed?: boolean) => void;
   onOpenStart: () => void;
   musicMuted: boolean;
   onMusicToggle: () => void;
@@ -18,6 +19,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
   const sequence = useRef<gsap.core.Timeline | null>(null);
   const preview = useRef<gsap.core.Timeline | null>(null);
   const finished = useRef(false);
+  const morph = useRef<ReturnType<typeof createOpeningMorph> | null>(null);
   const fallback = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [busy, setBusy] = useState(false);
   const [arriving, setArriving] = useState(true);
@@ -29,12 +31,14 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
   useEffect(() => {
     if (!arriving && matchMedia("(pointer: fine)").matches) openButton.current?.focus({ preventScroll: true });
   }, [arriving]);
-  const complete = () => {
+  const complete = useCallback((morphed = false) => {
     if (finished.current) return;
     finished.current = true;
     if (fallback.current) clearTimeout(fallback.current);
-    onOpened();
-  };
+    morph.current?.cleanup();
+    morph.current = null;
+    onOpened(morphed);
+  }, [onOpened]);
   useLayoutEffect(() => {
     const previous = document.body.style.overflow;
     const previousAnchor = document.documentElement.style.overflowAnchor;
@@ -46,19 +50,21 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
     (matchMedia("(pointer: coarse)").matches ? root.current : skipButton.current)?.focus({ preventScroll: true });
     const query = matchMedia("(prefers-reduced-motion: reduce)");
     const changed = () => {
-      if (query.matches && sequence.current) {
-        sequence.current.progress(1);
-      }
+      if (query.matches && sequence.current) complete(true);
     };
+    const resized = () => { if (morph.current) complete(true); };
     query.addEventListener("change", changed);
+    window.addEventListener("resize", resized);
     return () => {
       cancelAnimationFrame(resetScroll);
       document.body.style.overflow = previous;
       document.documentElement.style.overflowAnchor = previousAnchor;
       query.removeEventListener("change", changed);
+      window.removeEventListener("resize", resized);
+      morph.current?.cleanup();
       if (fallback.current) clearTimeout(fallback.current);
     };
-  }, []);
+  }, [complete]);
   const { contextSafe } = useGSAP(
     () => {
       const mm = gsap.matchMedia();
@@ -94,11 +100,20 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
       const compactScene = matchMedia("(max-width: 1100px), (max-height: 500px)").matches;
       setBusy(true);
       preview.current?.pause();
-      fallback.current = setTimeout(complete, 6000);
+      fallback.current = setTimeout(() => complete(true), 7000);
       try {
+        if (root.current) prepareOpeningMorph(root.current);
         sequence.current = gsap
           .timeline({
-            onComplete: complete,
+            onComplete: contextSafe(() => {
+              try {
+                if (finished.current || !root.current) return;
+                morph.current = createOpeningMorph(root.current, () => complete(true));
+                morph.current.timeline.play();
+              } catch {
+                complete(true);
+              }
+            }),
             defaults: { ease: "power2.inOut" },
           })
           .to(".envelope", { scale: 0.96, rotation: 0, y: 0, duration: 0.18 })
@@ -156,7 +171,7 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             0.7,
           )
           .to(".envelope", { scale: 1, duration: 0.5 }, 0.85)
-          .to(root.current, { autoAlpha: 0, scale: 1.03, duration: 0.6 }, 2.12);
+          .to(".envelope-letter", { rotation: 0, scale: 1, duration: 0.16, ease: "sine.out" }, 2.02);
       } catch {
         complete();
       }
@@ -217,10 +232,11 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             src="/art/lion-opening-close.webp"
             className="opening-lion"
             priority
+            morphKey="lion"
           >
             <BalloonBouquet kind="lion" />
           </Character>
-          <Character kind="kitten" className="opening-kitten" priority>
+          <Character kind="kitten" className="opening-kitten" priority morphKey="kitten">
             <BalloonBouquet kind="kitten" />
           </Character>
           <Butterfly className="opening-spark spark-c" />
@@ -242,14 +258,14 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
             <span className="envelope-back" aria-hidden="true" />
             <span className="envelope-letter-window" aria-hidden="true">
               <span className="envelope-letter">
-                <small className="envelope-invitation">Запрошуємо на день народження</small>
+                <small className="envelope-invitation" data-morph="invitation">Запрошуємо на день народження</small>
                 <span className="envelope-names">
-                  <span className="envelope-name-blue">Владислава</span>
+                  <span className="envelope-name-blue" data-morph="lion-name">Владислава</span>
                   <br />
-                  <span className="envelope-conjunction">та</span>{" "}
-                  <span className="envelope-name-pink">Лілії</span>
+                  <span className="envelope-conjunction" data-morph="conjunction">та</span>{" "}
+                  <span className="envelope-name-pink" data-morph="kitten-name">Лілії</span>
                 </span>
-                <small>Нам 2 рочки!</small>
+                <small data-morph="age" className="envelope-age">Нам виповнюється <strong>2 рочки!</strong></small>
               </span>
             </span>
             <span className="envelope-front" aria-hidden="true" />

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -40,21 +40,24 @@ export default function Invitation() {
   const [opening, setOpening] = useState(true);
   const [menu, setMenu] = useState(false);
   const [opened, setOpened] = useState(false);
+  const [morphed, setMorphed] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const menuButton = useRef<HTMLButtonElement>(null);
   const replayOpening = () => {
     setMenu(false);
     setOpened(false);
+    setMorphed(false);
     window.scrollTo({ top: 0, behavior: "instant" });
     if (location.hash)
       history.replaceState(null, "", location.pathname + location.search);
     setOpening(true);
   };
-  const finishOpening = () => {
+  const finishOpening = useCallback((didMorph = false) => {
     window.scrollTo({ top: 0, behavior: "instant" });
     setOpening(false);
+    setMorphed(didMorph);
     setOpened(true);
-  };
+  }, []);
   useEffect(() => {
     if (opened)
       document.getElementById("hero-title")?.focus({ preventScroll: true });
@@ -209,15 +212,15 @@ export default function Invitation() {
               <Butterfly className="hero-butterfly" />
             </div>
             <div className="hero-copy">
-              <p className="hero-invitation">Запрошуємо на день народження</p>
+              <p className="hero-invitation" data-morph="invitation">Запрошуємо на день народження</p>
               <h1 id="hero-title" tabIndex={-1} className="hero-names">
-                <SplitText text="Владислава" active={!opening} />
-                <small>та</small>
-                <SplitText text="Лілії" active={!opening} delay={45} />
+                <SplitText text="Владислава" active={!opening} settled={morphed} morphKey="lion-name" />
+                <small data-morph="conjunction">та</small>
+                <SplitText text="Лілії" active={!opening} settled={morphed} morphKey="kitten-name" delay={45} />
               </h1>
               <div className="age-note">
                 <span className="age-line" />
-                <p>
+                <p data-morph="age">
                   Нам виповнюється <strong>2 рочки!</strong>
                 </p>
                 <span className="age-line" />
@@ -241,10 +244,10 @@ export default function Invitation() {
             </div>
             <div className="hero-characters">
               <div className="hero-lion hero-lion-depth">
-                <SeatedCharacter kind="lion" priority />
+                <SeatedCharacter kind="lion" priority morphKey="lion" />
               </div>
               <div className="hero-kitten hero-kitten-depth">
-                <SeatedCharacter kind="kitten" priority />
+                <SeatedCharacter kind="kitten" priority morphKey="kitten" />
               </div>
             </div>
             <a href="#stories" className="scroll-cue">

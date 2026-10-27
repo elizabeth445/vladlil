@@ -278,6 +278,8 @@ button:disabled {
 }
 .hero-invitation {
   font-size: 15px;
+  width: fit-content;
+  margin-inline: auto;
   letter-spacing: 0.5px;
   margin-bottom: 27px;
 }
@@ -320,6 +322,8 @@ button:disabled {
 .age-note p {
   font-size: 16px;
   margin: 0;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .age-note strong {
   font-weight: 500;
@@ -327,6 +331,8 @@ button:disabled {
 }
 .age-line {
   width: 30px;
+  flex: 0 1 30px;
+  min-width: 0;
   height: 1px;
   background: #cfb48e;
 }
@@ -4924,6 +4930,9 @@ button:disabled {
 }
 .envelope-letter .envelope-name-blue { color: var(--blue); }
 .envelope-letter .envelope-name-pink { color: var(--pink); }
+.envelope-letter .envelope-name-blue,
+.envelope-letter .envelope-name-pink,
+.envelope-letter .envelope-conjunction { display: inline-block; }
 .envelope-letter .envelope-conjunction {
   font-size: 0.6em;
   color: #97735f;
@@ -5169,6 +5178,21 @@ button:disabled {
 }
 
 .hero-names .split-char { color: inherit; rotate: none; }
+.invitation-morph {
+  position: fixed;
+  inset: 0;
+  z-index: 71;
+  pointer-events: none;
+  overflow: clip;
+}
+.invitation-morph-item {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+}
+.envelope-letter .envelope-age { font-family: var(--body); }
 .hero-names .split-parent { display: block; white-space: nowrap; }
 
 @media (max-width: 360px) and (max-height: 650px) {

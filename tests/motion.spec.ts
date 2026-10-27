@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 for (const width of [390, 1512]) {
-  test(`SplitText reveals names once and keeps them settled at ${width}px`, async ({ page }) => {
+  test(`Morph lands names once without a second SplitText reveal at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: 742 });
     await page.goto("/");
     for (let replay = 0; replay < 2; replay++) {
@@ -35,7 +35,7 @@ for (const width of [390, 1512]) {
         }; sample();
       }));
       expect(stability).toBeLessThan(0.75);
-      expect(await page.evaluate(() => (window as Window & { nameReveals?: number[] }).nameReveals)).toEqual([1, 1]);
+      expect(await page.evaluate(() => (window as Window & { nameReveals?: number[] }).nameReveals)).toEqual([0, 0]);
       await expect(page.locator("#hero-title")).toBeFocused();
     }
   });

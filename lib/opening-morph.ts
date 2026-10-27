@@ -32,11 +32,6 @@ export function prepareOpeningMorph(opening: HTMLElement) {
   }
 }
 
-function artworkPath(image: HTMLImageElement) {
-  const url = new URL(image.currentSrc, document.baseURI);
-  return url.searchParams.get("url") ?? url.pathname;
-}
-
 const textProperties = [
   "color", "font-family", "font-size", "font-weight", "font-style",
   "font-variation-settings", "font-feature-settings", "letter-spacing",
@@ -62,6 +57,7 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
   const hidden: { element: HTMLElement; visibility: string }[] = [];
   const faded: { element: HTMLElement; opacity: string }[] = [];
   const images: HTMLImageElement[] = [];
+  const travellers: { visual: HTMLElement; source: HTMLElement; target: HTMLElement; wrapper: HTMLElement }[] = [];
   let disposed = false;
   let handoffFrame = 0;
   const conceal = (element: HTMLElement) => {
@@ -77,6 +73,10 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
     disposed = true;
     cancelAnimationFrame(handoffFrame);
     timeline.kill();
+    for (const { visual, source, target, wrapper } of travellers) {
+      // A new replay may already have claimed this same visual.
+      if (visual.parentElement === source || visual.parentElement === wrapper) target.append(visual);
+    }
     restore();
     for (const { element, opacity } of faded) element.style.opacity = opacity;
     stage.remove();
@@ -111,23 +111,25 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
       wrapper.dataset.morphKey = key;
       wrapper.style.width = `${width}px`;
       wrapper.style.height = `${height}px`;
-      const copy = target.cloneNode(true) as HTMLElement;
-      copyTypography(target, copy);
-      for (const node of [copy, ...Array.from(copy.querySelectorAll<HTMLElement>("*"))]) {
-        node.removeAttribute("id");
-        node.removeAttribute("class");
-        node.removeAttribute("tabindex");
-        node.removeAttribute("data-morph");
+      const visual = source.querySelector<HTMLElement>(".shared-character-visual");
+      if (visual) {
+        // Move the very same mounted image. No clone, bitmap substitution,
+        // source change, opacity blend or remount is allowed for characters.
+        travellers.push({ visual, source, target, wrapper });
+        const image = visual.querySelector("img");
+        if (image) images.push(image);
+      } else {
+        const copy = target.cloneNode(true) as HTMLElement;
+        copyTypography(target, copy);
+        for (const node of [copy, ...Array.from(copy.querySelectorAll<HTMLElement>("*"))]) {
+          node.removeAttribute("id");
+          node.removeAttribute("class");
+          node.removeAttribute("tabindex");
+          node.removeAttribute("data-morph");
+        }
+        Object.assign(copy.style, { display: "block", width: "100%", height: "100%", margin: "0", padding: "0", transform: "none", rotate: "none" });
+        wrapper.append(copy);
       }
-      Object.assign(copy.style, { display: "block", width: "100%", height: "100%", margin: "0", padding: "0", transform: "none", rotate: "none" });
-      if (copy instanceof HTMLImageElement) {
-        copy.src = (target as HTMLImageElement).currentSrc;
-        copy.removeAttribute("srcset");
-        copy.removeAttribute("sizes");
-        copy.loading = "eager";
-        images.push(copy);
-      }
-      wrapper.append(copy);
       stage.append(wrapper);
 
       // Capture the final viewport pose without normalizing/mutating the real
@@ -141,22 +143,13 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
         scaleX: 1,
         scaleY: 1,
       };
-      Flip.fit(wrapper, source, { scale: true });
-
-      if (source instanceof HTMLImageElement && artworkPath(source) !== artworkPath(target as HTMLImageElement)) {
-        const paintedSource = source.cloneNode() as HTMLImageElement;
-        paintedSource.src = source.currentSrc;
-        paintedSource.removeAttribute("class");
-        paintedSource.removeAttribute("srcset");
-        paintedSource.removeAttribute("sizes");
-        paintedSource.removeAttribute("data-morph");
-        Object.assign(paintedSource.style, { position: "absolute", inset: "0", width: "100%", height: "100%", margin: "0", transform: "none" });
-        wrapper.append(paintedSource);
-        images.push(paintedSource);
-        // Keep the destination fully painted underneath the source. Fading
-        // both in opposite directions causes a visible dip in opacity.
-        timeline.to(paintedSource, { opacity: 0, duration: 0.35, ease: "sine.inOut" }, 0.08);
+      if (visual) {
+        const from = source.getBoundingClientRect();
+        gsap.set(wrapper, { x: from.x, y: from.y, scale: from.width / width });
+      } else {
+        Flip.fit(wrapper, source, { scale: true });
       }
+
       timeline.to(wrapper, { ...destination, duration: 1.65, ease: "power3.inOut" }, 0);
     }
 
@@ -174,6 +167,7 @@ export function createOpeningMorph(opening: HTMLElement, onComplete: () => void)
     const play = async () => {
       await Promise.all(images.map(image => image.decode().catch(() => undefined)));
       if (disposed) return;
+      for (const { visual, wrapper } of travellers) wrapper.append(visual);
       for (const { source, target } of pairs) {
         conceal(source);
         conceal(target);

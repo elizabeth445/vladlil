@@ -17,6 +17,7 @@ import Opening from "./Opening";
 import SplitText from "./SplitText";
 import { PlayfulButterfly } from "./StorybookPlay";
 import SeatedCharacter from "./SeatedCharacter";
+import SharedInvitationCharacters from "./SharedInvitationCharacters";
 import {
   Balloon,
   Butterfly,
@@ -244,10 +245,10 @@ export default function Invitation() {
             </div>
             <div className="hero-characters">
               <div className="hero-lion hero-lion-depth">
-                <SeatedCharacter kind="lion" priority morphKey="lion" />
+                <SeatedCharacter kind="lion" shared />
               </div>
               <div className="hero-kitten hero-kitten-depth">
-                <SeatedCharacter kind="kitten" priority morphKey="kitten" />
+                <SeatedCharacter kind="kitten" shared />
               </div>
             </div>
             <a href="#stories" className="scroll-cue">
@@ -370,6 +371,7 @@ export default function Invitation() {
       {opening ? (
         <Opening onOpened={finishOpening} onOpenStart={startMusic} musicMuted={musicMuted} onMusicToggle={toggleMusic} />
       ) : null}
+      <SharedInvitationCharacters opening={opening} />
       <noscript>
         <style>{".invitation{display:block!important}"}</style>
         <p className="noscript-note">

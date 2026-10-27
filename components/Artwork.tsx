@@ -5,19 +5,16 @@ export function Character({
   priority = false,
   src,
   children,
-  morphKey,
 }: {
   kind: "lion" | "kitten";
   className?: string;
   priority?: boolean;
   src?: string;
   children?: React.ReactNode;
-  morphKey?: string;
 }) {
   return (
     <div className={`character ${kind} ${className}`}>
       <Image
-        data-morph={morphKey}
         src={src ?? `/art/${kind}.webp`}
         alt={
           kind === "lion"

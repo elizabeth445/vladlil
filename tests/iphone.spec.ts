@@ -2,6 +2,9 @@ import { test, expect } from "@playwright/test";
 
 test("iPhone WebKit: shared names and animals fly into the hero without a second reveal", async ({ page }) => {
   await page.goto("/");
+  await expect(page.locator(".shared-character-visual img")).toHaveCount(2);
+  const originals = await page.locator(".shared-character-visual img").elementHandles();
+  expect(originals).toHaveLength(2);
   await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).tap();
   await expect(page.locator(".invitation-morph-item")).toHaveCount(7);
   await page.waitForTimeout(650);
@@ -11,6 +14,7 @@ test("iPhone WebKit: shared names and animals fly into the hero without a second
   await page.screenshot({ path: "output/playwright/iphone-webkit-morph-flight.png" });
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator(".invitation-morph")).toHaveCount(0);
+  for (const image of originals) expect(await image.evaluate(element => element instanceof Element && !!element.closest("#home"))).toBe(true);
   await expect(page.locator(".hero-names > span").first()).toHaveAttribute("data-reveal-state", "complete");
   expect(await page.locator("#home [data-morph]").evaluateAll(elements =>
     elements.every(element => getComputedStyle(element).visibility === "visible"),

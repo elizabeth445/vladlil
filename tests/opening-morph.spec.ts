@@ -6,9 +6,15 @@ for (const width of [390, 1440]) {
     const errors: string[] = [];
     page.on("pageerror", error => errors.push(error.message));
     await page.goto("/");
+    await expect(page.locator(".shared-character-visual img")).toHaveCount(2);
+    const originals = await page.locator(".shared-character-visual img").elementHandles();
+    expect(originals).toHaveLength(2);
+    const sources = await Promise.all(originals.map(image => image.getAttribute("src")));
     await page.getByRole("button", { name: "Відкрити запрошення", exact: true }).click();
     await expect(page.locator(".invitation-morph-item")).toHaveCount(7);
     await expect(page.locator(".invitation-morph")).toBeVisible();
+    await expect(page.locator(".invitation-morph .shared-character-visual img")).toHaveCount(2);
+    for (const image of originals) expect(await image.evaluate(element => element instanceof Element && !!element.closest(".invitation-morph"))).toBe(true);
     const geometry = await page.evaluate(() => new Promise<{
       minWidth: number; maxStartError: number; maxLandingError: number; duplicate: boolean;
     }>(resolve => {
@@ -43,6 +49,15 @@ for (const width of [390, 1440]) {
     await expect(page.locator("#hero-title")).toBeFocused();
     await expect(page.locator(".hero-names > span").first()).toHaveAttribute("data-reveal-state", "complete");
     expect(errors).toEqual([]);
+    for (const [index, image] of originals.entries()) {
+      expect(await image.evaluate(element => element instanceof Element && !!element.closest("#home"))).toBe(true);
+      expect(await image.getAttribute("src")).toBe(sources[index]);
+    }
+    await expect(page.locator(".shared-character-visual img")).toHaveCount(2);
+    await page.getByRole("button", { name: "Відкрити запрошення ще раз", exact: true }).click();
+    for (const image of originals) expect(await image.evaluate(element => element instanceof Element && !!element.closest(".opening"))).toBe(true);
+    await page.getByRole("button", { name: "Пропустити", exact: true }).click();
+    for (const image of originals) expect(await image.evaluate(element => element instanceof Element && !!element.closest("#home"))).toBe(true);
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
   });
 }
@@ -82,11 +97,11 @@ test("opening is immediately clickable and accelerates the remaining balloons", 
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
 
-test("originals stay painted until decoded copies are ready and the final handoff never rewinds the entrance", async ({ page }) => {
+test("originals stay painted until their images are ready and the final handoff never rewinds the entrance", async ({ page }) => {
   await page.addInitScript(() => {
     const decode = HTMLImageElement.prototype.decode;
     HTMLImageElement.prototype.decode = async function () {
-      if (this.closest(".invitation-morph")) await new Promise(resolve => setTimeout(resolve, 400));
+      if (this.closest(".shared-character-visual")) await new Promise(resolve => setTimeout(resolve, 400));
       return decode.call(this);
     };
   });

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import { gsap } from "gsap";
 import { useGSAP } from "@gsap/react";
 import { Heart, ArrowRight } from "lucide-react";
-import { Character, Star, Butterfly, Balloon } from "./Artwork";
+import { Star, Butterfly, Balloon } from "./Artwork";
 import OpeningArrival from "./OpeningArrival";
 import { MusicToggle } from "./BackgroundMusic";
 import { createOpeningMorph, prepareOpeningMorph } from "@/lib/opening-morph";
@@ -238,18 +238,14 @@ export default function Opening({ onOpened, onOpenStart, musicMuted, onMusicTogg
       </div>
       <div className="opening-scene">
         <div className="opening-character-backdrop" aria-hidden="true">
-          <Character
-            kind="lion"
-            src="/art/lion-opening-close.webp"
-            className="opening-lion"
-            priority
-            morphKey="lion"
-          >
+          <div className="character lion opening-lion">
+            <span className="shared-character-anchor shared-anchor-lion" data-character-anchor="opening-lion" data-morph="lion" />
             <BalloonBouquet kind="lion" />
-          </Character>
-          <Character kind="kitten" className="opening-kitten" priority morphKey="kitten">
+          </div>
+          <div className="character kitten opening-kitten">
+            <span className="shared-character-anchor shared-anchor-kitten" data-character-anchor="opening-kitten" data-morph="kitten" />
             <BalloonBouquet kind="kitten" />
-          </Character>
+          </div>
           <Butterfly className="opening-spark spark-c" />
         </div>
         <div className="opening-stage">

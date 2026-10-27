@@ -1022,6 +1022,9 @@ button:disabled {
   min-height: 48px;
   font-size: 14px;
 }
+.venue-copy > .text-link {
+  font-weight: 600;
+}
 .text-link {
   display: inline-flex;
   align-items: center;
@@ -5032,8 +5035,15 @@ button:disabled {
   .opening-character-backdrop > .spark-c { width: 30px; }
   .header-actions > button { min-width: 44px; min-height: 44px; }
   .venue-image > img { height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
+  .venue-copy { text-align: center; }
+  .venue-copy dl { width: fit-content; max-width: 100%; margin-inline: auto; }
+  .venue-copy dl > div {
+    display: grid;
+    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    gap: 12px;
+  }
   .venue-copy > .button { width: 100%; justify-content: center; }
-  .venue-copy > .text-link { min-height: 44px; margin: 14px 0 0; }
+  .venue-copy > .text-link { display: inline-flex; min-height: 44px; margin: 14px 0 0; }
   .letter-bottom .button { max-width: 100%; white-space: normal; }
   .question textarea::placeholder { font-size: 16px; }
   .calendar-day > button { min-width: 40px; min-height: 40px; }

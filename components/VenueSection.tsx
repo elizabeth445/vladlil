@@ -5,7 +5,7 @@ import Image from "next/image";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { useGSAP } from "@gsap/react";
-import { ArrowUpRight, CalendarDays, Clock3, MapPin } from "lucide-react";
+import { CalendarDays, Clock3, MapPin } from "lucide-react";
 import { EVENT } from "@/lib/event";
 import { Star } from "./Artwork";
 
@@ -211,7 +211,6 @@ export default function VenueSection({ active }: { active: boolean }) {
           rel="noopener noreferrer"
         >
           Прокласти маршрут
-          <ArrowUpRight size={18} />
         </a>
         <a
           className="text-link"
@@ -220,7 +219,6 @@ export default function VenueSection({ active }: { active: boolean }) {
           rel="noopener noreferrer"
         >
           Сайт ресторану
-          <ArrowUpRight size={16} />
         </a>
       </div>
     </section>

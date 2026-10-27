@@ -1,5 +1,28 @@
 import { test, expect } from "@playwright/test";
 
+test("venue details share a text edge and center each icon on its first line", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Пропустити", exact: true }).click();
+  for (const width of [320, 390, 768, 1024, 1440]) {
+    await page.setViewportSize({ width, height: 1000 });
+    await page.locator(".venue-copy").scrollIntoViewIfNeeded();
+    const rows = await page.locator(".venue-copy dl > div").evaluateAll(elements => elements.map(element => {
+      const text = element.querySelector("dd")!, icon = element.querySelector("dt svg")!;
+      const range = document.createRange(); range.selectNodeContents(text);
+      const lines = Array.from(range.getClientRects()).filter(rect => rect.width > 0);
+      const first = lines[0], image = icon.getBoundingClientRect();
+      return { starts: lines.map(line => line.left), iconLeft: image.left, offset: Math.abs(image.top + image.height / 2 - first.top - first.height / 2) };
+    }));
+    const starts = rows.flatMap(row => row.starts);
+    expect(Math.max(...starts) - Math.min(...starts)).toBeLessThan(1);
+    expect(Math.max(...rows.map(row => row.iconLeft)) - Math.min(...rows.map(row => row.iconLeft))).toBeLessThan(1);
+    expect(rows.every(row => row.offset < 3)).toBe(true);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+    await page.screenshot({ path: `output/playwright/venue-aligned-${width}.png` });
+  }
+});
+
 test("balloons are in the first response and leave along different paths on phone and desktop", async ({ page, request }) => {
   const html = await (await request.get("/")).text();
   expect(html).toContain("arrival-balloon-flight");

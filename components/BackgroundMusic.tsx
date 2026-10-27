@@ -9,7 +9,7 @@ export function useBackgroundMusic() {
 
   const play = () => {
     const audio = audioRef.current;
-    if (!audio) return;
+    if (!audio || document.visibilityState === "hidden") return;
     audio.volume = 0.35;
     // Call play synchronously inside the envelope's trusted click/tap. Delaying
     // it until the animation completes loses the audio permission on iOS.
@@ -28,11 +28,32 @@ export function useBackgroundMusic() {
     const audio = audioRef.current;
     if (!audio) return;
     mounted.current = true;
-    const sync = () => setPlaying(!audio.paused && !audio.ended && !audio.error);
+    const stop = () => {
+      audio.pause();
+      setPlaying(false);
+    };
+    const sync = () => {
+      if (document.visibilityState === "hidden") { stop(); return; }
+      setPlaying(!audio.paused && !audio.ended && !audio.error);
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") stop();
+    };
+    const onRestore = (event: PageTransitionEvent) => {
+      if (event.persisted) stop();
+    };
     for (const event of ["playing", "pause", "ended", "error"]) audio.addEventListener(event, sync);
+    // Mobile browsers often only emit visibilitychange when the tab/app is
+    // closed. Stop on both lifecycle paths; returning never starts music.
+    document.addEventListener("visibilitychange", onVisibility);
+    window.addEventListener("pagehide", stop);
+    window.addEventListener("pageshow", onRestore);
     return () => {
       mounted.current = false;
       for (const event of ["playing", "pause", "ended", "error"]) audio.removeEventListener(event, sync);
+      document.removeEventListener("visibilitychange", onVisibility);
+      window.removeEventListener("pagehide", stop);
+      window.removeEventListener("pageshow", onRestore);
       audio.pause();
     };
   }, []);

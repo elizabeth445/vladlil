@@ -40,6 +40,31 @@ test("iPhone WebKit: invitation gesture starts music and touch control pauses it
   expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
   await page.getByRole("button", { name: "Увімкнути музику", exact: true }).tap();
   await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(await audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(true);
+  await page.getByRole("button", { name: "Увімкнути музику", exact: true }).tap();
+  await expect.poll(() => audio.evaluate((element: HTMLAudioElement) => element.paused)).toBe(false);
+});
+
+test("iPhone WebKit: restaurant text and icons form aligned columns", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Пропустити", exact: true }).tap();
+  await page.locator(".venue-copy").scrollIntoViewIfNeeded();
+  const starts = await page.locator(".venue-copy dd").evaluateAll(elements => elements.map(element => {
+    const range = document.createRange(); range.selectNodeContents(element); return range.getClientRects()[0].left;
+  }));
+  expect(Math.max(...starts) - Math.min(...starts)).toBeLessThan(1);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false);
+  await page.screenshot({ path: "output/playwright/venue-aligned-iphone.png" });
 });
 
 test("iPhone WebKit: shared closing animation stays transparent and replays on tap", async ({ page }) => {

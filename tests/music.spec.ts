@@ -62,3 +62,53 @@ test("a previously muted visit cannot prevent the envelope from starting music",
   await page.getByRole("button", { name: "Вимкнути музику", exact: true }).click();
   expect(await audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
 });
+
+test("hiding or suspending the page stops music and returning never resumes it automatically", async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Відкрити конверт", exact: true }).click();
+  const audio = page.locator("audio");
+  await expect.poll(() => audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(false);
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await expect.poll(() => audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+  await expect(page.getByRole("button", { name: "Увімкнути музику", exact: true })).toBeVisible();
+  await page.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  expect(await audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+  await page.getByRole("button", { name: "Увімкнути музику", exact: true }).click();
+  await expect.poll(() => audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(false);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pagehide", { persisted: true })));
+  expect(await audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+  await page.evaluate(() => window.dispatchEvent(new PageTransitionEvent("pageshow", { persisted: true })));
+  expect(await audio.evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+});
+
+test("leaving stops playback and a new visitor hears music only after opening their own envelope", async ({ page, browser }) => {
+  await page.emulateMedia({ reducedMotion: "reduce" });
+  await page.goto("/");
+  const url = page.url();
+  await page.getByRole("button", { name: "Відкрити конверт", exact: true }).click();
+  await expect.poll(() => page.locator("audio").evaluate((e: HTMLAudioElement) => e.paused)).toBe(false);
+  await page.evaluate(() => window.addEventListener("pagehide", () => {
+    localStorage.setItem("music-paused-on-departure", String(document.querySelector("audio")!.paused));
+  }, { once: true }));
+  await page.goto("about:blank");
+  await page.goBack();
+  expect(await page.evaluate(() => localStorage.getItem("music-paused-on-departure"))).toBe("true");
+  expect(await page.locator("audio").evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+
+  const visitor = await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true, reducedMotion: "reduce" });
+  try {
+    const freshPage = await visitor.newPage();
+    await freshPage.goto(url);
+    await expect(freshPage.getByRole("dialog")).toBeVisible();
+    expect(await freshPage.locator("audio").evaluate((e: HTMLAudioElement) => e.paused)).toBe(true);
+    await freshPage.getByRole("button", { name: "Відкрити конверт", exact: true }).tap();
+    await expect.poll(() => freshPage.locator("audio").evaluate((e: HTMLAudioElement) => e.paused)).toBe(false);
+  } finally { await visitor.close(); }
+});

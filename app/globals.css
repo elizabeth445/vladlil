@@ -961,14 +961,18 @@ button:disabled {
   font-size: 14px;
 }
 .venue-copy dl > div {
-  display: flex;
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
   gap: 16px;
-  align-items: flex-start;
+  align-items: start;
   margin: 15px 0;
 }
 .venue-copy dt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: #a78a68;
-  margin-top: 3px;
+  margin-top: calc((1lh - 20px) / 2);
 }
 .venue-copy dd {
   margin: 0;
@@ -4948,10 +4952,10 @@ button:disabled {
   .header-actions > button { min-width: 44px; min-height: 44px; }
   .venue-image > img { height: auto; aspect-ratio: 3 / 2; object-fit: cover; }
   .venue-copy { text-align: center; }
-  .venue-copy dl { width: fit-content; max-width: 100%; margin-inline: auto; }
+  .venue-copy dl { width: fit-content; max-width: 100%; margin-inline: auto; text-align: left; }
   .venue-copy dl > div {
     display: grid;
-    grid-template-columns: 20px minmax(0, 1fr) 20px;
+    grid-template-columns: 20px minmax(0, 1fr);
     gap: 12px;
   }
   .venue-copy > .button { width: 100%; justify-content: center; }

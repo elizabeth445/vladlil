@@ -59,47 +59,48 @@ def tracks(frames, reference, roi, search):
 
 
 def head_attachment(frames):
-    """A rigid crown follows the head, never the AI crown's changing outline.
+    """Lock a single rigid crown to the original forehead contact footprint.
 
-    Nearby eight-frame references retain fur/face correspondences during the
-    turn. Matching every pose directly to frame zero loses almost all of those
-    features and mistakes changing crown points for head movement.
+    The three blue settings remain readable when the gold tips are clipped.
+    They locate the crown seat absolutely in every frame, avoiding accumulated
+    face-feature drift after turns/blinks. Never use the changing tip outline.
     """
-    features = [descriptors(frame, (310, 70, 730, 290)) for frame in frames]
-    poses, counts = [], []
-    for i, (points, desc) in enumerate(features):
-        reference = max(0, ((i - 1) // 8) * 8)
-        keypoints, description = features[reference]
-        good = [m for m, n in cv2.BFMatcher().knnMatch(description, desc, k=2)
-                if m.distance < .72 * n.distance]
-        assert len(good) >= 12, f'Insufficient head features on frame {i}'
-        matrix, valid = cv2.estimateAffinePartial2D(
-            np.float32([keypoints[m.queryIdx].pt for m in good]),
-            np.float32([points[m.trainIdx].pt for m in good]),
-            method=cv2.RANSAC, ransacReprojThreshold=1.5)
-        count = int(valid.sum()) if valid is not None else 0
-        assert matrix is not None and count >= 12, f'Unreliable head pose on frame {i}'
-        local = np.eye(3); local[:2] = matrix
-        poses.append(local @ (poses[reference] if reference else np.eye(3)))
-        counts.append(count)
+    centers, right_points, spans, areas = [], [], [], []
+    for i, frame in enumerate(frames):
+        r, g, b = [frame[:, :, c].astype(np.float32) for c in range(3)]
+        mask = ((g - r > 5) & (b - r > 12) & (g > 65) & (frame[:, :, 3] > 200)).astype(np.uint8)
+        mask[95:] = 0; mask[:, :250] = 0; mask[:, 650:] = 0
+        _, _, stats, points = cv2.connectedComponentsWithStats(mask, 8)
+        stones = [(int(stat[4]), point) for stat, point in zip(stats[1:], points[1:]) if stat[4] > 10]
+        assert stones, f'Missing crown-seat settings: {i}'
+        area, center = max(stones, key=lambda item: item[0])
+        right = [item for item in stones if item[1][0] > center[0] + 15]
+        left = [item for item in stones if item[1][0] < center[0] - 15]
+        assert area >= 80 and right, f'Unreliable crown-seat footprint: {i}'
+        right = max(right, key=lambda item: item[0])[1]
+        centers.append(center); right_points.append(right); areas.append(area)
+        spans.append(np.linalg.norm(right - max(left, key=lambda item: item[0])[1]) if left else np.nan)
 
-    poses = np.asarray(poses)
-    # Smooth physical pose parameters, not affine coefficients: this retains
-    # a true rotation/uniform scale with no shear or independent crown wobble.
-    angle = gaussian_filter1d(np.unwrap(np.arctan2(poses[:, 1, 0], poses[:, 0, 0])), 2)
-    scale = np.exp(gaussian_filter1d(np.log(np.hypot(poses[:, 0, 0], poses[:, 1, 0])), 2))
-    seat = np.array([485., 65.])
-    anchors = np.einsum('nij,j->ni', poses[:, :2], np.r_[seat, 1])
-    anchors = gaussian_filter1d(anchors, 2, axis=0)
+    centers, right_points, spans = map(np.asarray, (centers, right_points, spans))
+    known = np.flatnonzero(np.isfinite(spans))
+    spans = np.interp(np.arange(len(frames)), known, spans[known])
+    directions = right_points - centers
+    raw_angle = np.unwrap(np.arctan2(directions[:, 1], directions[:, 0]))
+    angle = gaussian_filter1d(raw_angle - raw_angle[0], 2)
+    scale = np.exp(gaussian_filter1d(np.log(spans / spans[0]), 2))
+    centers = gaussian_filter1d(centers, 2, axis=0)
     result = np.zeros((len(frames), 2, 3))
     result[:, 0, 0] = result[:, 1, 1] = scale * np.cos(angle)
     result[:, 1, 0] = scale * np.sin(angle)
     result[:, 0, 1] = -result[:, 1, 0]
-    result[:, :, 2] = anchors - np.einsum('nij,j->ni', result[:, :, :2], seat)
-    folder = WORK / 'lion'
-    np.savez(folder / 'head-attachment.npz', matrices=result, inliers=counts,
-             seat=seat, anchors=anchors, angle=angle, scale=scale)
-    return result, counts
+    # One fixed crown-to-forehead offset; no integration or independent bounce.
+    reference_center = np.asarray([477.2, 39.0])
+    result[:, :, 2] = centers - np.einsum('nij,j->ni', result[:, :, :2], reference_center)
+    seat = np.array([485., 65.])
+    anchors = np.einsum('nij,j->ni', result, np.r_[seat, 1])
+    np.savez(WORK / 'lion' / 'head-attachment.npz', matrices=result, markerAreas=areas,
+             seat=seat, anchors=anchors, markerCenters=centers, angle=angle, scale=scale)
+    return result, areas
 
 
 def patch(name, matrix, size, padded=True):
@@ -187,9 +188,12 @@ def lion():
         canvas = replace(canvas, gift, gift_mask * (1 - fade((i - 72) / 24)))
         car = patch('car-whole', cars[i], size)
         car_mask = window(cars[i], size, [(165, 545), (171, 511), (204, 500), (211, 469), (235, 459), (304, 459), (331, 477), (342, 510), (363, 528), (363, 577), (340, 595), (235, 601), (170, 573)], 6)
-        canvas = replace(canvas, car, car_mask * fade((i - 100) / 24))
+        # The original jump owns frames 0–123. The repair is enabled only
+        # once the car has landed and its own features reliably match. Earlier
+        # gift-panel matches placed a second car underneath the airborne one.
+        canvas = replace(canvas, car, car_mask * fade((i - 123) / 5))
         Image.fromarray(canvas).save(folder / f'{i:04}.png')
-    return {'headMinimumInliers': min(a), 'crownAttachment': 'Fixed rigid pose in head-local coordinates', 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
+    return {'minimumCrownSeatMarkerArea': min(a), 'crownAttachment': 'Fixed rigid pose in head-local coordinates', 'carMinimumInliersAfter124': min(c[124:]), 'giftMinimumInliersBefore72': min(d[:72])}
 
 
 def kitten():
@@ -235,7 +239,7 @@ def export(kinds):
         report['restoration'] = {
             'tool': 'Built-in imagegen; localized transparent patches only',
             'patches': 'assets/animation-restoration/patches.json',
-            'tracking': 'Nearby head-feature SIFT/RANSAC; rigid crown attachment with smoothed head pose' if kind == 'lion' else 'SIFT + RANSAC similarity; temporally smoothed anchors',
+            'tracking': 'Absolute forehead contact footprint from crown-seat settings; rigid non-accumulating pose' if kind == 'lion' else 'SIFT + RANSAC similarity; temporally smoothed anchors',
             'scope': 'Whole crown, star and car; broad feathered gift-panel overlap' if kind == 'lion' else 'Doll feet replaced by the tracked front gift wall before they emerge',
             'originalPixelsPreserved': 'Original character outside accessory repair windows' if kind == 'lion' else 'All pixels outside the tracked lower gift wall window',
         }

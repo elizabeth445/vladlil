@@ -35,6 +35,13 @@ import VenueSection from "./VenueSection";
 import { MusicToggle, useBackgroundMusic } from "./BackgroundMusic";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
 export default function Invitation() {
+  useEffect(() => {
+    // Remove only this site's old saved answers; new answers live in memory.
+    try {
+      for (const key of ["birthday:letter:vladyslav:v1", "birthday:letter:liliia:v1", "birthday:rsvp:v1"])
+        localStorage.removeItem(key);
+    } catch { /* Storage may be disabled; the forms still start empty. */ }
+  }, []);
   const { audioRef, muted: musicMuted, start: startMusic, toggle: toggleMusic } = useBackgroundMusic();
   const [opening, setOpening] = useState(true);
   const [menu, setMenu] = useState(false);

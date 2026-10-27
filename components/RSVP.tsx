@@ -1,5 +1,5 @@
 "use client";
-import { type FormEvent, useEffect, useRef, useState } from "react";
+import { type FormEvent, useState } from "react";
 import {
   ArrowRight,
   CalendarPlus,
@@ -8,35 +8,12 @@ import {
 } from "lucide-react";
 import FlyingPaperPlane from "./FlyingPaperPlane";
 import { Ribbon } from "./Artwork";
-import { readDraft, saveDraft } from "@/lib/browser-drafts";
 import { useFormSubmission } from "./useFormSubmission";
 
 export default function RSVP() {
   const { status, error, submit: send } = useFormSubmission();
   const [guestName, setGuestName] = useState("");
   const [attending, setAttending] = useState("yes");
-  const formRef = useRef<HTMLFormElement>(null);
-  useEffect(() => {
-    const draft = readDraft("birthday:rsvp:v1", { guest_name: 200, attending: 3, guests: 2, comment: 1500 });
-    const timer = setTimeout(() => {
-      if (!formRef.current) return;
-      if (draft.attending === "yes" || draft.attending === "no") setAttending(draft.attending);
-      for (const field of ["guest_name", "guests", "comment"]) {
-        const element = formRef.current.elements.namedItem(field);
-        if (draft[field] !== undefined && (element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)) element.value = draft[field];
-      }
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
-  function persistDraft(form: HTMLFormElement) {
-    const data = new FormData(form);
-    return saveDraft("birthday:rsvp:v1", {
-      guest_name: String(data.get("guest_name") || ""),
-      attending: String(data.get("attending") || "yes"),
-      guests: String(data.get("guests") || "1"),
-      comment: String(data.get("comment") || ""),
-    });
-  }
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form = new FormData(e.currentTarget);
@@ -99,16 +76,14 @@ export default function RSVP() {
           <span className="rsvp-signature">З любов’ю, Владислав та Лілія</span>
         </div>
       ) : (
-        <form ref={formRef} className="rsvp-form" onSubmit={submit} aria-busy={status === "loading"} onChange={(e) => {
-          persistDraft(e.currentTarget);
-        }}>
+        <form className="rsvp-form" autoComplete="off" onSubmit={submit} aria-busy={status === "loading"}>
           <fieldset disabled={status === "loading"}>
             <legend className="sr-only">Підтвердьте присутність</legend>
             <label htmlFor="rsvp-name">Ім’я та прізвище</label>
             <input
               id="rsvp-name"
               name="guest_name"
-              autoComplete="name"
+              autoComplete="off"
               required
               minLength={2}
               maxLength={200}

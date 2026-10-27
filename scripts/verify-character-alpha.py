@@ -19,7 +19,7 @@ photo = Image.open('public/art/franco.webp').convert('RGB')
 
 
 def verify_crown_attachment(root):
-    """Measure the rendered gold against the independently tracked head pose."""
+    """Measure rendered gold and reviewed absolute forehead contact points."""
     poses = np.load(root / 'head-attachment.npz')
     matrices = poses['matrices']
     sift = cv2.SIFT_create(nfeatures=2500, contrastThreshold=.008)
@@ -52,8 +52,15 @@ def verify_crown_attachment(root):
         errors.append(error); counts.append(int(inliers.sum()))
     maximum_turn = float(np.degrees(np.abs(np.diff(poses['angle']))).max())
     assert maximum_turn < 3, f'Abrupt crown/head rotation: {maximum_turn}'
+    # Reviewed in the original source poses, including the lean, return and
+    # post-blink rest. Relative-only tests missed accumulated lateral drift.
+    contacts = {0: (485, 65), 48: (437, 60), 72: (326, 93), 108: (501, 46),
+                132: (471, 66), 180: (470, 66), 239: (471, 63)}
+    contact_error = max(float(np.linalg.norm(poses['anchors'][i] - point)) for i, point in contacts.items())
+    assert contact_error < 4, f'Crown slipped off reviewed forehead contact: {contact_error}px'
     return {'maximumRenderedCrownMedianDriftPx': max(errors), 'minimumRenderedCrownFeatureMatches': min(counts),
-            'minimumHeadFeatureInliers': int(poses['inliers'].min()), 'maximumAdjacentRotationDegrees': maximum_turn}
+            'maximumReviewedForeheadContactErrorPx': contact_error,
+            'minimumCrownSeatMarkerAreaPx': int(poses['markerAreas'].min()), 'maximumAdjacentRotationDegrees': maximum_turn}
 
 
 for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
@@ -127,11 +134,14 @@ for kind in ([args.kind] if args.kind else ['lion', 'kitten']):
             # The restored accessories now overlap their old contours. The
             # central face/chest must remain the original animation throughout.
             assert np.array_equal(original[190:385, 380:700], restored[254:449, 380:700]), f'Lion face/chest changed: {i}'
+            if 96 <= i <= 123:
+                assert np.array_equal(original[250:504, 120:370], restored[314:568, 120:370]), f'Extra car layer during original jump: {i}'
             valid = (restored[63, 730:825, 3] > 248) & (restored[64, 730:825, 3] > 248)
             step = float(np.median(np.abs(restored[64, 730:825, :3][valid].astype(float) - restored[63, 730:825, :3][valid])))
             star_steps.append(step)
             assert step < 8, f'Horizontal color seam through star: {i}: {step}'
         refinement = {'allFramesClearTopAndBottom': True, 'originalFaceAndChestPixelsPreserved': True,
+                      'originalSingleCarJumpPreservedUntilLanding': True,
                       'accessoriesRenderedWholeAcrossFormerCameraBoundary': True,
                       'maximumStarMedianColorStepAtFormerJoin': max(star_steps)}
         refinement['rigidCrownAttachment'] = verify_crown_attachment(root)

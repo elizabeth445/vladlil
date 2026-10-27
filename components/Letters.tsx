@@ -10,7 +10,6 @@ import {
   Send,
 } from "lucide-react";
 import { answerKeys, CHILDREN, type Child } from "@/lib/event";
-import { readDraft, saveDraft } from "@/lib/browser-drafts";
 import { useFormSubmission } from "./useFormSubmission";
 import {
   Character,
@@ -40,13 +39,6 @@ function LetterForm({
   const [trap, setTrap] = useState("");
   const panel = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const draft = readDraft(`birthday:letter:${child}:v1`, {
-      identity: 200, resemblance: 1500, character: 1500, future: 1500, wishes: 1500,
-    });
-    const timer = setTimeout(() => setAnswers(current => ({ ...current, ...draft })), 0);
-    return () => clearTimeout(timer);
-  }, [child]);
   useGSAP(
     () => {
       if (!active || !panel.current) return;
@@ -119,7 +111,7 @@ function LetterForm({
           </button>
         </div>
       ) : (
-        <form onSubmit={submit} aria-busy={status === "loading"}>
+        <form onSubmit={submit} autoComplete="off" aria-busy={status === "loading"}>
           <header className="letter-heading">
             <div>
               <span className="letter-to">
@@ -161,7 +153,6 @@ function LetterForm({
                   onChange={(e) => {
                     const next = { ...answers, [key]: e.target.value };
                     setAnswers(next);
-                    saveDraft(`birthday:letter:${child}:v1`, next);
                   }}
                   placeholder={
                     i === 0

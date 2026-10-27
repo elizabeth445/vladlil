@@ -17,7 +17,7 @@
     "restoration": {
       "tool": "Built-in imagegen; localized transparent patches only",
       "patches": "assets/animation-restoration/patches.json",
-      "tracking": "Nearby head-feature SIFT/RANSAC; rigid crown attachment with smoothed head pose",
+      "tracking": "Absolute forehead contact footprint from crown-seat settings; rigid non-accumulating pose",
       "scope": "Whole crown, star and car; broad feathered gift-panel overlap",
       "originalPixelsPreserved": "Original character outside accessory repair windows"
     },
@@ -25,13 +25,15 @@
       "restorationChecks": {
         "allFramesClearTopAndBottom": true,
         "originalFaceAndChestPixelsPreserved": true,
+        "originalSingleCarJumpPreservedUntilLanding": true,
         "accessoriesRenderedWholeAcrossFormerCameraBoundary": true,
         "maximumStarMedianColorStepAtFormerJoin": 3.0,
         "rigidCrownAttachment": {
-          "maximumRenderedCrownMedianDriftPx": 0.1731281876564026,
-          "minimumRenderedCrownFeatureMatches": 62,
-          "minimumHeadFeatureInliers": 21,
-          "maximumAdjacentRotationDegrees": 1.2813758590052078
+          "maximumRenderedCrownMedianDriftPx": 0.20862551033496857,
+          "minimumRenderedCrownFeatureMatches": 46,
+          "maximumReviewedForeheadContactErrorPx": 0.5053095321059271,
+          "minimumCrownSeatMarkerAreaPx": 94,
+          "maximumAdjacentRotationDegrees": 1.2937560363931984
         }
       },
       "minimumSemanticInteriorRetention": null,
@@ -42,14 +44,14 @@
       "webpDurationMs": 9999,
       "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
       "allMasterFramesHaveAntialiasedEdges": true,
-      "maxAdjacentSilhouetteAreaChange": 0.03305947866864502
+      "maxAdjacentSilhouetteAreaChange": 0.03035468343037923
     },
     "files": {
-      "lion-first.webp": 315912,
-      "lion-last.webp": 297826,
-      "lion.mov": 3650799,
-      "lion.webp": 8064504,
-      "lion.webm": 3300375
+      "lion-first.webp": 316018,
+      "lion-last.webp": 295802,
+      "lion.mov": 3667791,
+      "lion.webp": 7926862,
+      "lion.webm": 3272191
     }
   },
   "kitten": {

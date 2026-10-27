@@ -39,3 +39,11 @@ export const rsvpSchema = z
     comment: z.string().trim().max(1500),
   })
   .strict();
+
+// Three independent forms; unknown fields and bot-filled honeypots are rejected.
+export const submissionSchema = z.discriminatedUnion("type", [
+  rsvpSchema.extend({ type: z.literal("rsvp") }),
+  letterSchema.omit({ child: true }).extend({ type: z.literal("vladyslav") }),
+  letterSchema.omit({ child: true }).extend({ type: z.literal("liliia") }),
+]);
+export type Submission = z.infer<typeof submissionSchema>;

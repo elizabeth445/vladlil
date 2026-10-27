@@ -1,36 +1,15 @@
 import { test, expect } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import { countdown, calendarDays, EVENT } from "../lib/event";
-import { csvCell } from "../lib/csv";
-import { randomUUID, createHmac } from "node:crypto";
-import { existsSync, readFileSync } from "node:fs";
-import { DatabaseSync } from "node:sqlite";
-const origin = "http://127.0.0.1:3000";
+import { randomUUID } from "node:crypto";
 const identity = `QA ${randomUUID().slice(0, 8)}`;
-const cleanupIds: string[] = [];
-test.afterAll(() => {
-  if (!existsSync(".data/invitation.sqlite")) return;
-  const db = new DatabaseSync(".data/invitation.sqlite");
-  for (const id of cleanupIds) {
-    db.prepare("DELETE FROM guest_letters WHERE request_id=?").run(id);
-    db.prepare("DELETE FROM rsvp_responses WHERE request_id=?").run(id);
-  }
-  const auth = JSON.parse(readFileSync(".data/auth.json", "utf8"));
-  for (const scope of ["submission", "login"])
-    db.prepare("DELETE FROM rate_limits WHERE key=?").run(
-      createHmac("sha256", auth.rateSecret)
-        .update(`${scope}:local`)
-        .digest("hex"),
-    );
-  db.close();
-});
 async function enter(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Пропустити", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
   await expect(page.locator("h1")).toBeVisible();
 }
-test("Kyiv countdown, Monday calendar and CSV injection protection", () => {
+test("Kyiv countdown and Monday calendar", () => {
   expect(Date.parse(EVENT.start)).toBe(Date.parse("2026-11-15T14:00:00Z"));
   expect(countdown(Date.parse(EVENT.start) - 90061000).values).toEqual([
     1, 1, 1, 1,
@@ -42,8 +21,6 @@ test("Kyiv countdown, Monday calendar and CSV injection protection", () => {
   const days = calendarDays();
   expect(days.slice(0, 6)).toEqual([null, null, null, null, null, null]);
   expect(days.indexOf(15) % 7).toBe(6);
-  expect(csvCell(" =SUM(1,2)")).toBe('"\' =SUM(1,2)"');
-  expect(csvCell('Теплі "слова"')).toBe('"Теплі ""слова"""');
 });
 test("opening works by keyboard, repeats on reload and replays from the footer", async ({
   page,
@@ -118,125 +95,6 @@ test("320–1440 layouts, calendar heart, independent letter drafts and mobile m
     )
     .toBe(0);
 });
-test("local letters save independently, errors retain text, RSVP saves", async ({
-  page,
-}) => {
-  await enter(page);
-  for (const child of ["vladyslav", "liliia"]) {
-    await page.locator(`#tab-${child}`).click();
-    for (const [i, key] of [
-      "identity",
-      "resemblance",
-      "character",
-      "future",
-      "wishes",
-    ].entries())
-      await page
-        .locator(`#${child}-${key}`)
-        .fill(i === 0 ? identity : `Теплі слова для ${child} — відповідь ${i}`);
-    let sentId = "";
-    page.once("request", (request) => {
-      if (request.url().endsWith("/api/letters"))
-        sentId = request.postDataJSON().request_id;
-    });
-    const responsePromise = page.waitForResponse((r) =>
-      r.url().endsWith("/api/letters"),
-    );
-    await page.waitForTimeout(2100);
-    await page.locator(`#panel-${child} button[type=submit]`).click();
-    const response = await responsePromise;
-    expect(response.status()).toBe(201);
-    cleanupIds.push(response.request().postDataJSON().request_id);
-    void sentId;
-    await expect(page.locator(`#panel-${child} [role=status]`)).toContainText(
-      "збережено",
-    );
-  }
-  await page.locator("#rsvp-name").fill(identity);
-  await page.locator("#rsvp-guests").selectOption("3");
-  await page.locator("#rsvp-comment").fill("Тестове підтвердження присутності");
-  page.once("request", (r) => {
-    if (r.url().endsWith("/api/rsvp"))
-      cleanupIds.push(r.postDataJSON().request_id);
-  });
-  const saved = page.waitForResponse((r) => r.url().endsWith("/api/rsvp"));
-  await page.getByRole("button", { name: "Надіслати відповідь" }).click();
-  expect((await saved).status()).toBe(201);
-  await expect(page.locator(".rsvp-success")).toContainText("Дякуємо");
-  await expect(page.locator(".rsvp-success h3")).toContainText(identity);
-  const db = new DatabaseSync(".data/invitation.sqlite");
-  expect(
-    (
-      db
-        .prepare("SELECT COUNT(*) AS n FROM guest_letters WHERE guest_name=?")
-        .get(identity) as { n: number }
-    ).n,
-  ).toBe(2);
-  expect(
-    (
-      db
-        .prepare("SELECT guests FROM rsvp_responses WHERE guest_name=?")
-        .get(identity) as { guests: number }
-    ).guests,
-  ).toBe(3);
-  db.close();
-});
-test("server validation, same-origin protection and idempotent retries", async ({
-  request,
-}) => {
-  const payload = {
-    child: "vladyslav",
-    answers: {
-      identity,
-      resemblance: "На маму",
-      character: "Добрий",
-      future: "Мандрівник",
-      wishes: "Будь щасливим",
-    },
-    website: "",
-    started_at: Date.now() - 3000,
-    request_id: randomUUID(),
-  };
-  cleanupIds.push(payload.request_id);
-  const first = await request.post("/api/letters", {
-    headers: { origin },
-    data: payload,
-  });
-  expect(first.status()).toBe(201);
-  const repeated = await request.post("/api/letters", {
-    headers: { origin },
-    data: payload,
-  });
-  expect((await repeated.json()).id).toBe((await first.json()).id);
-  expect(
-    (
-      await request.post("/api/letters", {
-        headers: { origin },
-        data: {
-          ...payload,
-          request_id: randomUUID(),
-          answers: { ...payload.answers, wishes: "" },
-        },
-      })
-    ).status(),
-  ).toBe(400);
-  expect(
-    (
-      await request.post("/api/letters", {
-        headers: { origin: "https://example.com" },
-        data: payload,
-      })
-    ).status(),
-  ).toBe(403);
-  expect(
-    (
-      await request.post("/api/letters", {
-        headers: { origin },
-        data: { ...payload, website: "spam" },
-      })
-    ).status(),
-  ).toBe(400);
-});
 test("network error never shows success and preserves draft", async ({
   page,
 }) => {
@@ -250,7 +108,7 @@ test("network error never shows success and preserves draft", async ({
     "wishes",
   ])
     await page.locator(`#liliia-${key}`).fill("Тестовий лист без мережі");
-  await page.route("**/api/letters", (r) => r.abort("failed"));
+  await page.route("**/api/submit", (r) => r.abort("failed"));
   await page.locator("#panel-liliia button[type=submit]").click();
   await expect(page.locator("#panel-liliia [role=alert]")).not.toBeEmpty();
   await expect(page.locator("#liliia-wishes")).toHaveValue(
@@ -258,36 +116,13 @@ test("network error never shows success and preserves draft", async ({
   );
   await expect(page.locator("#panel-liliia .letter-success")).toHaveCount(0);
 });
-test("calendar file, private admin authentication, CSV export and logout", async ({
-  page,
-  request,
-}) => {
+test("calendar download and retired database routes", async ({ request }) => {
   const ics = await request.get("/api/calendar");
   expect(ics.headers()["content-type"]).toContain("text/calendar");
-  const contents = (await ics.text()).replace(/\r\n /g, "");
-  expect(contents).toContain("DTSTART;TZID=Europe/Kyiv:20261115T160000");
-  expect(contents).toContain("Обухівське шосе");
-  expect((await request.get("/api/admin/export")).status()).toBe(401);
-  await page.goto("/admin");
-  await expect(page.getByLabel("Пароль")).toBeVisible();
-  // Use the generated local password without exposing it in test output.
-  const access = readFileSync(".data/admin-access.txt", "utf8");
-  const password = access.match(/Пароль: (.+)/)?.[1];
-  expect(password).toBeTruthy();
-  await page.getByLabel("Пароль").fill(password!);
-  await page.getByRole("button", { name: "Увійти", exact: true }).click();
-  await expect(page.getByRole("link", { name: "Усі листи" })).toBeVisible();
-  const exportResult = await page.request.get("/api/admin/export");
-  expect(exportResult.status()).toBe(200);
-  expect(await exportResult.text()).toContain("Дитина");
-  const cookie = (await page.context().cookies()).find(
-    (c) => c.name === "birthday_admin",
-  );
-  expect(cookie?.httpOnly).toBe(true);
-  expect(cookie?.sameSite).toBe("Strict");
-  await page.getByRole("button", { name: "Вийти" }).click();
-  await expect(page.getByLabel("Пароль")).toBeVisible();
-  expect((await page.request.get("/api/admin/export")).status()).toBe(401);
+  expect((await ics.text()).replace(/\r\n /g, "")).toContain("DTSTART;TZID=Europe/Kyiv:20261115T160000");
+  for (const path of ["/admin", "/api/admin/export", "/api/admin/login", "/api/letters", "/api/rsvp"]) {
+    expect((await request.get(path)).status()).toBe(404);
+  }
 });
 test("reduced motion, accessible main page and letters", async ({ page }) => {
   await page.emulateMedia({ reducedMotion: "reduce" });

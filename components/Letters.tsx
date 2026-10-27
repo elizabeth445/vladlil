@@ -11,8 +11,8 @@ import {
   Send,
 } from "lucide-react";
 import { answerKeys, CHILDREN, type Child } from "@/lib/event";
-import { submissionsEnabled } from "@/lib/features";
 import { readDraft, saveDraft } from "@/lib/browser-drafts";
+import { useFormSubmission } from "./useFormSubmission";
 import {
   Character,
   Butterfly,
@@ -37,18 +37,11 @@ function LetterForm({
 }) {
   const data = CHILDREN[child];
   const [answers, setAnswers] = useState(emptyAnswers);
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "error" | "success"
-  >("idle");
-  const [error, setError] = useState("");
-  const [draftMessage, setDraftMessage] = useState("");
+  const { status, error, submit: send } = useFormSubmission();
   const [trap, setTrap] = useState("");
-  const requestId = useRef<string | null>(null);
-  const started = useRef(0);
   const panel = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    started.current = Date.now();
     const draft = readDraft(`birthday:letter:${child}:v1`, {
       identity: 200, resemblance: 1500, character: 1500, future: 1500, wishes: 1500,
     });
@@ -91,48 +84,7 @@ function LetterForm({
   );
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (status === "loading") return;
-    if (!submissionsEnabled) {
-      const saved = saveDraft(`birthday:letter:${child}:v1`, answers);
-      setDraftMessage(saved
-        ? "Чернетку збережено на цьому пристрої. Організаторам її не надіслано."
-        : "Браузер не дозволив зберегти чернетку. Ваш текст залишається у формі.");
-      return;
-    }
-    setStatus("loading");
-    setError("");
-    requestId.current ||= crypto.randomUUID();
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-    try {
-      const response = await fetch("/api/letters", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          child,
-          answers,
-          website: trap,
-          started_at: started.current,
-          request_id: requestId.current,
-        }),
-        signal: controller.signal,
-      });
-      const result = await response.json();
-      if (!response.ok || result.saved !== true)
-        throw new Error(
-          result.error || "Не вдалося зберегти лист. Спробуйте ще раз.",
-        );
-      setStatus("success");
-    } catch (err) {
-      setError(
-        err instanceof Error && err.name !== "AbortError"
-          ? err.message
-          : "Немає зв’язку із сервером. Ваш текст залишився у формі. Спробуйте ще раз.",
-      );
-      setStatus("error");
-    } finally {
-      clearTimeout(timeout);
-    }
+    await send({ type: child, answers, website: trap });
   }
   useEffect(() => {
     if (status === "success") statusRef.current?.focus();
@@ -162,7 +114,7 @@ function LetterForm({
             Теплі слова —<br />у скриньці спогадів
           </h3>
           <p>
-            Дякуємо! Ваш лист для {data.recipient} збережено{" "}
+            Дякуємо! Ваш лист для {data.recipient} надіслано організаторам{" "}
             {child === "vladyslav" ? "💙" : "💗"}
           </p>
           <button className="button secondary" onClick={onOther}>
@@ -170,7 +122,7 @@ function LetterForm({
           </button>
         </div>
       ) : (
-        <form onSubmit={submit}>
+        <form onSubmit={submit} aria-busy={status === "loading"}>
           <header className="letter-heading">
             <div>
               <span className="letter-to">
@@ -181,7 +133,6 @@ function LetterForm({
             </div>
             <Character kind={data.art} />
           </header>
-          {!submissionsEnabled && <p className="draft-note">Поки що можна зберегти чернетку на своєму пристрої. Надсилання листів ще не відкрито.</p>}
           <div className="honey" aria-hidden="true">
             <label htmlFor={`website-${child}`}>Ваш сайт</label>
             <input
@@ -214,7 +165,6 @@ function LetterForm({
                     const next = { ...answers, [key]: e.target.value };
                     setAnswers(next);
                     saveDraft(`birthday:letter:${child}:v1`, next);
-                    setDraftMessage("");
                   }}
                   placeholder={
                     i === 0
@@ -236,19 +186,19 @@ function LetterForm({
               {status === "loading" ? (
                 <>
                   <LoaderCircle className="spin" size={18} />
-                  Зберігаємо лист…
+                  Надсилаємо лист…
                 </>
               ) : (
                 <>
-                  {submissionsEnabled ? `Зберегти лист для ${data.recipient}` : "Зберегти чернетку на пристрої"}
+                  Надіслати лист для {data.recipient}
                   <Send size={17} />
                 </>
               )}
             </button>
+            <p className="privacy-note">Відповіді приватно надсилаються організаторам свята через Telegram.</p>
             <div className="form-message" role="alert">
               {error}
             </div>
-            {!submissionsEnabled && <p className="draft-note" role="status">{draftMessage}</p>}
           </div>
         </form>
       )}

@@ -8,22 +8,15 @@ import {
 } from "lucide-react";
 import FlyingPaperPlane from "./FlyingPaperPlane";
 import { Ribbon } from "./Artwork";
-import { submissionsEnabled } from "@/lib/features";
 import { readDraft, saveDraft } from "@/lib/browser-drafts";
+import { useFormSubmission } from "./useFormSubmission";
 
 export default function RSVP() {
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "error" | "success"
-  >("idle");
-  const [error, setError] = useState("");
-  const [draftMessage, setDraftMessage] = useState("");
+  const { status, error, submit: send } = useFormSubmission();
   const [guestName, setGuestName] = useState("");
   const [attending, setAttending] = useState("yes");
-  const started = useRef(0);
-  const requestId = useRef<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   useEffect(() => {
-    started.current = Date.now();
     const draft = readDraft("birthday:rsvp:v1", { guest_name: 200, attending: 3, guests: 2, comment: 1500 });
     const timer = setTimeout(() => {
       if (!formRef.current) return;
@@ -46,48 +39,13 @@ export default function RSVP() {
   }
   async function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (status === "loading") return;
-    if (!submissionsEnabled) {
-      setDraftMessage(persistDraft(e.currentTarget)
-        ? "Чернетку збережено на цьому пристрої. Організаторам її не надіслано."
-        : "Браузер не дозволив зберегти чернетку. Ваші відповіді залишаються у формі.");
-      return;
-    }
-    setStatus("loading");
-    setError("");
     const form = new FormData(e.currentTarget);
-    requestId.current ||= crypto.randomUUID();
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 20000);
-    try {
-      const response = await fetch("/api/rsvp", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          request_id: requestId.current,
-          started_at: started.current,
-          website: String(form.get("website") || ""),
-          guest_name: String(form.get("guest_name")),
-          attending: attending === "yes",
-          guests: attending === "yes" ? Number(form.get("guests")) : 1,
-          comment: String(form.get("comment") || ""),
-        }),
-        signal: controller.signal,
-      });
-      const result = await response.json();
-      if (!response.ok || result.saved !== true)
-        throw new Error(result.error || "Не вдалося надіслати відповідь.");
+    if (await send({ type: "rsvp", website: String(form.get("website") || ""),
+      guest_name: String(form.get("guest_name") || ""), attending: attending === "yes",
+      guests: attending === "yes" ? Number(form.get("guests")) : 1,
+      comment: String(form.get("comment") || ""),
+    })) {
       setGuestName(String(form.get("guest_name") || "").trim());
-      setStatus("success");
-    } catch (err) {
-      setStatus("error");
-      setError(
-        err instanceof Error && err.name !== "AbortError"
-          ? err.message
-          : "Немає зв’язку. Спробуйте ще раз — ваші відповіді залишилися у формі.",
-      );
-    } finally {
-      clearTimeout(timeout);
     }
   }
   return (
@@ -141,11 +99,9 @@ export default function RSVP() {
           <span className="rsvp-signature">З любов’ю, Владислав та Лілія</span>
         </div>
       ) : (
-        <form ref={formRef} className="rsvp-form" onSubmit={submit} onChange={(e) => {
+        <form ref={formRef} className="rsvp-form" onSubmit={submit} aria-busy={status === "loading"} onChange={(e) => {
           persistDraft(e.currentTarget);
-          setDraftMessage("");
         }}>
-          {!submissionsEnabled && <p className="draft-note">Поки що можна зберегти чернетку на своєму пристрої. Підтвердження присутності ще не відкрито.</p>}
           <fieldset disabled={status === "loading"}>
             <legend className="sr-only">Підтвердьте присутність</legend>
             <label htmlFor="rsvp-name">Ім’я та прізвище</label>
@@ -222,15 +178,15 @@ export default function RSVP() {
                 </>
               ) : (
                 <>
-                  {submissionsEnabled ? "Надіслати відповідь" : "Зберегти чернетку на пристрої"}
+                  Надіслати відповідь
                   <ArrowRight size={18} />
                 </>
               )}
             </button>
+            <p className="privacy-note">Відповіді приватно надсилаються організаторам свята через Telegram.</p>
             <div role="alert" className="form-message">
               {error}
             </div>
-            {!submissionsEnabled && <p className="draft-note" role="status">{draftMessage}</p>}
           </fieldset>
         </form>
       )}

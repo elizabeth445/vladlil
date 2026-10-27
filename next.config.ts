@@ -2,10 +2,6 @@ import type { NextConfig } from "next";
 const config: NextConfig = {
   poweredByHeader: false,
   devIndicators: false,
-  env: {
-    NEXT_PUBLIC_SUBMISSIONS_ENABLED:
-      process.env.NEXT_PUBLIC_SUBMISSIONS_ENABLED ?? (process.env.VERCEL ? "false" : "true"),
-  },
   async headers() {
     return [
       {

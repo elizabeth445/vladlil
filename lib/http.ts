@@ -1,6 +1,3 @@
-import "server-only";
-import { createHmac } from "node:crypto";
-import { localAuth } from "./local-store";
 export function sameOrigin(request: Request) {
   const url = new URL(request.url);
   const expected =
@@ -9,7 +6,7 @@ export function sameOrigin(request: Request) {
   return request.headers.get("origin") === expected;
 }
 export async function readJson(request: Request) {
-  if (!request.headers.get("content-type")?.startsWith("application/json"))
+  if (request.headers.get("content-type")?.split(";")[0].trim().toLowerCase() !== "application/json")
     throw new Error("INVALID_BODY");
   const reader = request.body?.getReader();
   if (!reader) throw new Error("INVALID_BODY");
@@ -26,19 +23,5 @@ export async function readJson(request: Request) {
     chunks.push(value);
   }
   return JSON.parse(Buffer.concat(chunks).toString("utf8"));
-}
-export function rateKey(request: Request, scope: string) {
-  const secret = localAuth().rateSecret;
-  if (!secret || secret.length < 32 || secret.startsWith("replace-"))
-    throw new Error("RATE_LIMIT_UNCONFIGURED");
-  const ip = process.env.VERCEL
-    ? request.headers.get("x-vercel-forwarded-for") ||
-      request.headers.get("x-real-ip") ||
-      "unknown"
-    : process.env.TRUST_PROXY === "1"
-      ? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-        "unknown"
-      : "local";
-  return createHmac("sha256", secret).update(`${scope}:${ip}`).digest("hex");
 }
 export const noStore = { "Cache-Control": "no-store" };

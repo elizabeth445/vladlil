@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "lint": "eslint . --max-warnings 0",
     "test": "playwright test",
-    "admin:hash": "node scripts/admin-password.mjs"
+    "telegram:chat-id": "node --env-file-if-exists=.env.local scripts/telegram-chat-id.mjs"
   },
   "dependencies": {
     "@fontsource-variable/onest": "^5.2.0",

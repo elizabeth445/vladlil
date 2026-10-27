@@ -1780,133 +1780,6 @@ button:disabled {
   background: #f2dfc2;
   padding: 12px;
 }
-.admin-shell {
-  max-width: 1100px;
-  padding: 40px 25px;
-  margin: auto;
-}
-.admin-shell h1 {
-  font-size: 34px;
-}
-.admin-shell > header {
-  display: flex;
-  justify-content: space-between;
-  gap: 25px;
-  align-items: center;
-  margin-bottom: 35px;
-}
-.admin-back {
-  font-size: 14px;
-  color: var(--blue);
-  display: inline-block;
-  margin-bottom: 30px;
-}
-.admin-login {
-  max-width: 440px;
-  margin: 80px auto;
-  padding: 30px;
-  background: #fffdf8;
-  border: 1px solid #ddd0bd;
-}
-.admin-login h1 {
-  font-size: 27px;
-}
-.admin-login label {
-  display: block;
-  font-size: 14px;
-  margin-bottom: 8px;
-}
-.admin-login input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #d3bfa9;
-  border-radius: 5px;
-  margin-bottom: 20px;
-  font-size: 16px;
-}
-.admin-login .button {
-  width: 100%;
-}
-.admin-filters {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin-bottom: 30px;
-}
-.admin-filters a {
-  border: 1px solid #ccbda6;
-  border-radius: 5px;
-  padding: 8px 15px;
-  font-size: 14px;
-}
-.admin-filters a.active {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: white;
-}
-.admin-letter {
-  padding: 25px 0;
-  border-bottom: 1px solid #d9c5af;
-}
-.admin-letter h2 {
-  font-size: 23px;
-}
-.admin-letter time {
-  font-size: 14px;
-  color: #887562;
-}
-.admin-letter dt {
-  font-weight: 500;
-  font-size: 14px;
-  margin-top: 18px;
-}
-.admin-letter dd {
-  margin: 5px 0 0;
-  font-size: 14px;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.admin-export {
-  display: flex;
-  gap: 12px;
-  flex-wrap: wrap;
-  margin: 30px 0;
-}
-.admin-export a {
-  font-size: 14px;
-}
-.admin-empty {
-  padding: 40px 0;
-  font-family: var(--display);
-  font-size: 20px;
-}
-.admin-table-wrap {
-  overflow: auto;
-}
-.admin-table {
-  border-collapse: collapse;
-  width: 100%;
-  font-size: 14px;
-}
-.admin-table th,
-.admin-table td {
-  text-align: left;
-  border-bottom: 1px solid #ddcbb2;
-  padding: 12px;
-  vertical-align: top;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-.admin-notice {
-  font-size: 14px;
-  color: #7b6358;
-}
-.admin-shell .logout {
-  background: transparent;
-  border-bottom: 1px solid #b69b83;
-  padding: 8px;
-  font-size: 14px;
-}
 @media (min-width: 1200px) {
   .hero-copy {
     padding-top: 70px;
@@ -2641,13 +2514,6 @@ button:disabled {
     font-size: 14px;
     max-width: 240px;
     margin-top: 17px;
-  }
-  .admin-shell > header {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-  .admin-shell h1 {
-    font-size: 28px;
   }
 }
 @media (max-width: 360px) {
@@ -5149,19 +5015,7 @@ button:disabled {
   color: #97735f;
 }
 
-.draft-note {
-  color: #826c60;
-  font-size: 15px;
-  line-height: 1.7;
-  text-wrap: pretty;
-}
-.letter-paper > form > .draft-note {
-  padding-bottom: 18px;
-  margin-bottom: 22px;
-  border-bottom: 1px solid #d4bca34d;
-}
-.rsvp-form > .draft-note { margin-bottom: 24px; }
-.draft-note:empty { display: none; }
+
 
 /* Keep the invitation and its hosts in one scene on compact screens. */
 .opening-scene { display: contents; }
@@ -5408,4 +5262,9 @@ button:disabled {
   .opening-caption .little-hearts { display: none; }
   .opening-scene { height: 230px; }
   .opening-footnote { font-size: 14px; margin-top: 10px; }
+}
+
+.letter-bottom .privacy-note, .rsvp-form .privacy-note {
+  max-width: 36rem; margin: 14px auto 0; font-family: var(--body);
+  font-size: 14px; line-height: 1.55; color: var(--ink-soft, #79665d); text-align: center;
 }

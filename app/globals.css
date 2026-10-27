@@ -1458,6 +1458,7 @@ button:disabled {
 }
 .closing {
   text-align: center;
+  isolation: isolate;
   max-width: none;
   padding-top: 80px;
   padding-bottom: 25px;
@@ -1465,6 +1466,35 @@ button:disabled {
   background:
     radial-gradient(ellipse at 38% 92%, #dceaf177, transparent 35%),
     radial-gradient(ellipse at 68% 90%, #f3dce377, transparent 35%);
+}
+.closing-confetti {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.closing-confetti-piece {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 7px;
+  height: 12px;
+  border-radius: 2px;
+  opacity: 0;
+}
+.closing-confetti-piece.confetti-kind-1 {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.closing-confetti-piece.confetti-kind-2 {
+  width: 11px;
+  height: 11px;
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 93%, 50% 71%, 21% 93%, 32% 57%, 2% 35%, 39% 35%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .closing-confetti { display: none; }
 }
 .closing h2 {
   font-size: 36px;

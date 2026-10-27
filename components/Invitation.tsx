@@ -31,6 +31,7 @@ import Calendar from "./Calendar";
 import Letters from "./Letters";
 import RSVP from "./RSVP";
 import ClosingGreeting from "./ClosingGreeting";
+import ClosingConfetti from "./ClosingConfetti";
 import VenueSection from "./VenueSection";
 import { MusicToggle, useBackgroundMusic } from "./BackgroundMusic";
 gsap.registerPlugin(useGSAP, ScrollTrigger);
@@ -327,6 +328,7 @@ export default function Invitation() {
           <Letters />
           <RSVP />
           <section className="closing section">
+            <ClosingConfetti active={!opening} />
             <Balloon className="closing-balloon" />
             <Balloon color="pink" className="closing-balloon pink" />
             <Balloon

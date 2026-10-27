@@ -15,17 +15,15 @@ import {
 import { EVENT } from "@/lib/event";
 import Opening from "./Opening";
 import SplitText from "./SplitText";
-import { PlayfulButterfly } from "./StorybookPlay";
 import SeatedCharacter from "./SeatedCharacter";
 import SharedInvitationCharacters from "./SharedInvitationCharacters";
+import AnimatedCharacter from "./AnimatedCharacter";
 import {
   Balloon,
   Butterfly,
-  Character,
   Ribbon,
   Star,
   CelebrationThread,
-  PartyArtwork,
 } from "./Artwork";
 import Countdown from "./Countdown";
 import Calendar from "./Calendar";
@@ -102,30 +100,6 @@ export default function Invitation() {
             0,
           )
           .to(".hero-spark-depth", { y: mobile ? -95 : -170 }, 0);
-        gsap.from(".story-blue .story-illustration", {
-          x: 20,
-          rotation: -3,
-          duration: 1.1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: ".story-blue",
-            start: "top 85%",
-            once: true,
-          },
-          clearProps: "all",
-        });
-        gsap.from(".story-pink .story-illustration", {
-          x: -20,
-          rotation: 3,
-          duration: 1.1,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: ".story-pink",
-            start: "top 85%",
-            once: true,
-          },
-          clearProps: "all",
-        });
         gsap.from(".story-ribbon path", {
           strokeDashoffset: 1000,
           strokeDasharray: 1000,
@@ -285,12 +259,8 @@ export default function Invitation() {
               />
             </svg>
             <article className="child-story story-blue">
-              <div className="story-illustration">
-                <div className="watercolor-wash" />
-                <Character kind="lion" />
-                <Star className="story-star" />
-                <Balloon className="story-balloon" />
-                <PartyArtwork kind="gift" color="blue" className="story-gift" />
+              <div className="story-illustration story-animated">
+                <AnimatedCharacter kind="lion" enabled={!opening} />
               </div>
               <div className="story-copy">
                 <h3>
@@ -306,11 +276,8 @@ export default function Invitation() {
               </div>
             </article>
             <article className="child-story story-pink">
-              <div className="story-illustration">
-                <div className="watercolor-wash" />
-                <Character kind="kitten" />
-                <PlayfulButterfly className="story-butterfly" />
-                <PartyArtwork kind="gift" color="pink" className="story-gift" />
+              <div className="story-illustration story-animated">
+                <AnimatedCharacter kind="kitten" enabled={!opening} />
               </div>
               <div className="story-copy">
                 <h3>

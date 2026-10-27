@@ -250,7 +250,7 @@ test("desktop paper never intersects the dedication, including short windows", a
     await expect(page.getByRole("dialog")).toHaveCount(0);
   }
 });
-test("painted frame keeps proportions, greetings move to closing and butterfly responds to input", async ({
+test("painted frame keeps proportions and greetings stay in the closing section", async ({
   page,
 }) => {
   await enter(page);
@@ -270,21 +270,5 @@ test("painted frame keeps proportions, greetings move to closing and butterfly r
   }
   await expect(page.locator("#home .character-greeting")).toHaveCount(0);
   await expect(page.locator(".closing-caption")).toHaveText(["Радий вас бачити!", "Мур-р! До зустрічі!"]);
-  await page.getByRole("button", { name: "Пограти з метеликом" }).click();
-  await page.waitForTimeout(350);
-  expect(
-    await page
-      .locator(".butterfly-flight")
-      .evaluate(
-        (e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).m42,
-      ),
-  ).toBeLessThan(-5);
-  await page.waitForTimeout(1600);
-  expect(
-    await page
-      .locator(".butterfly-flight")
-      .evaluate(
-        (e) => new DOMMatrixReadOnly(getComputedStyle(e).transform).m42,
-      ),
-  ).toBeCloseTo(0, 0);
+
 });

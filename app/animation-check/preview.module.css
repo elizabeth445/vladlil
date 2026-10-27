@@ -1,0 +1,12 @@
+.page { max-width: 1280px; margin: 0 auto; padding: 40px 20px 80px; }
+.page h1 { font-size: clamp(28px, 4vw, 48px); }
+.page > p { margin: 16px 0 24px; }
+.controls { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 16px; }
+.controls button { border: 1px solid #cbb9aa; border-radius: 12px; padding: 12px 16px; color: #62483f; background: #fff9f0; font: inherit; cursor: pointer; min-height: 44px; }
+.controls button[aria-pressed=true] { background: #d5e8ef; border-color: #6398b2; }
+.controls label { display: flex; align-items: center; gap: 8px; min-height: 44px; }
+.controls input { width: 18px; height: 18px; }
+.scenes { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 24px; }
+.scenes h2 { font-size: 28px; margin: 18px 0; }
+.stage { padding: 18px; border-radius: 18px; }
+@media(max-width: 700px) { .scenes { grid-template-columns: minmax(0,1fr); } }

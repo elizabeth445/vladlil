@@ -461,25 +461,6 @@ button:disabled {
   margin: 0 auto;
   isolation: isolate;
 }
-.story-illustration > .character {
-  width: 85%;
-  margin: auto;
-  position: relative;
-}
-.watercolor-wash {
-  position: absolute;
-  z-index: -1;
-  inset: 8% -1% 5%;
-  border-radius: 43% 57% 47% 53% / 58% 45% 55% 42%;
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    #cfe7ee99 0%,
-    #cfe7ee5c 46%,
-    #d7eaf222 67%,
-    transparent 71%
-  );
-  filter: blur(5px);
-}
 .story-copy {
   padding-top: 20px;
 }
@@ -519,40 +500,8 @@ button:disabled {
 .story-pink .story-copy h3 span {
   color: var(--pink);
 }
-.story-pink .watercolor-wash {
-  background: radial-gradient(
-    ellipse at 50% 50%,
-    #efd0d699 0%,
-    #f1d8d75c 46%,
-    #f8e0e322 67%,
-    transparent 71%
-  );
-}
 .story-pink .story-illustration {
   max-width: 320px;
-}
-.story-star {
-  position: absolute;
-  top: 3%;
-  right: 10%;
-  width: 32px;
-  rotate: 12deg;
-}
-.story-balloon {
-  position: absolute !important;
-  left: -10%;
-  top: 25%;
-  width: 70px !important;
-  z-index: -1;
-  rotate: -15deg;
-}
-.story-butterfly {
-  position: absolute;
-  top: 3%;
-  left: -1%;
-  width: 55px;
-  rotate: 24deg;
-  animation: flutter 9s ease-in-out infinite;
 }
 .ribbon-bow {
   width: 130px;
@@ -2075,31 +2024,8 @@ button:disabled {
   .story-handwriting {
     font-size: 14px;
   }
-  .story-illustration > .character {
-    width: 100%;
-  }
   .story-pink {
     margin-top: 65px;
-  }
-  .story-balloon {
-    width: 40px !important;
-    left: -13%;
-    top: 10%;
-  }
-  .story-balloon .balloon-body {
-    height: 55px;
-  }
-  .story-balloon .balloon-string {
-    height: 45px;
-  }
-  .story-star {
-    width: 20px;
-    top: -20px;
-    right: 12%;
-  }
-  .story-butterfly {
-    width: 35px;
-    top: -20px;
   }
   .story-ribbon {
     top: 310px;
@@ -2590,9 +2516,6 @@ button:disabled {
   .story-handwriting {
     font-size: 14px;
   }
-  .story-balloon {
-    left: -8%;
-  }
   .countdown-section h2 {
     font-size: 27px;
   }
@@ -2746,9 +2669,6 @@ button:disabled {
   }
 }
 @media (max-width: 767px) {
-  .story-balloon {
-    left: 0;
-  }
   .calendar-bow {
     right: 0;
     width: 90px;
@@ -3867,26 +3787,6 @@ button:disabled {
 .hero-characters {
   pointer-events: none;
 }
-.butterfly-play {
-  border: 0;
-  padding: 5px;
-  background: none;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 2;
-}
-.butterfly-flight {
-  display: block;
-  transform-origin: 50% 50%;
-}
-.butterfly-play .butterfly {
-  width: 100%;
-}
-.butterfly-play:hover .butterfly {
-  filter: drop-shadow(0 2px 3px #bd627c20);
-}
 @media (max-height: 800px) and (min-width: 768px) {
   .opening-stage {
     --envelope-width: 255px;
@@ -3939,18 +3839,6 @@ button:disabled {
   .envelope-seal {
     top: 67px;
   }
-  .butterfly-play.story-butterfly {
-    width: 48px;
-    height: 48px;
-    left: -3%;
-    top: -24px;
-  }
-}
-.butterfly-play.story-butterfly {
-  animation: none;
-}
-.butterfly-play .butterfly {
-  animation: flutter 9s ease-in-out infinite;
 }
 /* Size the frame from its natural aspect and blend its painted paper edges. */
 .hero-frame {
@@ -4424,19 +4312,6 @@ button:disabled {
   height: 100%;
   object-fit: contain;
 }
-.story-illustration .story-gift {
-  position: absolute;
-  width: 34%;
-  left: -8%;
-  bottom: -3%;
-  z-index: 2;
-  rotate: -7deg;
-}
-.story-pink .story-gift {
-  left: auto;
-  right: -8%;
-  rotate: 7deg;
-}
 .birthday-treats {
   display: flex;
   align-items: flex-end;
@@ -4448,8 +4323,6 @@ button:disabled {
 }
 .birthday-treats .party-art { width: clamp(105px, 12vw, 160px); }
 @media (max-width: 767px) {
-  .story-illustration .story-gift { left: -2%; width: 31%; }
-  .story-pink .story-gift { left: auto; right: -2%; }
   .birthday-treats { margin-top: 18px; }
   .birthday-treats .party-art { width: clamp(94px, 27vw, 115px); }
 }
@@ -5270,3 +5143,13 @@ button:disabled {
 .seated-character > .shared-anchor-kitten { position: absolute; width: 97.5%; left: 1.25%; top: -2%; }
 .shared-character-visual { display: block; position: absolute; inset: 0; pointer-events: none; }
 .shared-character-visual > img { display: block; position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; object-fit: contain; }
+
+/* One self-contained transparent scene: gifts and decorations are already in it. */
+.story-illustration.story-animated { width: 100%; max-width: 460px; }
+.animated-character { position: relative; display: block; width: 100%; padding: 0; border: 0; border-radius: 0; background: transparent; box-shadow: none; isolation: isolate; cursor: pointer; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+.animated-character > img, .animated-character > video { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.animated-character > video, .animated-character > img:last-child { visibility: hidden; }
+.animated-character:focus-visible { outline: 2px solid var(--blue); outline-offset: 8px; border-radius: 14px; }
+@media (max-width: 600px) {
+  .story-illustration.story-animated { width: min(100%, 380px); max-width: 380px; }
+}

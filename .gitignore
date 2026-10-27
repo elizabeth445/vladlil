@@ -15,3 +15,7 @@ output/
 .cache/
 *.tmp
 /audiocoffee-children-toys-kids-happy-birthday-background-373058.mp3
+__pycache__/
+*.py[cod]
+.venv/
+*.onnx

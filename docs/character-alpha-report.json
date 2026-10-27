@@ -1,0 +1,68 @@
+{
+  "lion": {
+    "source": "gemini_generated_video_5ae93f35.mp4",
+    "sourceSha256": "54036a1cadfec84aaeca5fc64c414be2eb4e5d41e8e2758b61d881f6e2dd5571",
+    "fps": 24.0,
+    "frames": 240,
+    "duration": 10.0,
+    "width": 800,
+    "height": 504,
+    "crop": [
+      18,
+      0,
+      818,
+      504
+    ],
+    "method": "BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination",
+    "alphaVerification": {
+      "minimumTailForegroundRetention": null,
+      "masterFrames": 240,
+      "webpFrames": 240,
+      "vp9Frames": 240,
+      "webpDurationMs": 9999,
+      "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
+      "allMasterFramesHaveAntialiasedEdges": true,
+      "maxAdjacentSilhouetteAreaChange": 0.030427530105340127
+    },
+    "files": {
+      "lion-first.webp": 293748,
+      "lion-last.webp": 262144,
+      "lion.mov": 3821206,
+      "lion.webp": 6912106,
+      "lion.webm": 3158738
+    }
+  },
+  "kitten": {
+    "source": "gemini_generated_video_a02ad9e5.mp4",
+    "sourceSha256": "a8c94624236e438e445c24ca7986e44f63998dd50ba99ea14e600f19978e6246",
+    "fps": 24.0,
+    "frames": 240,
+    "duration": 10.0,
+    "width": 658,
+    "height": 472,
+    "crop": [
+      138,
+      28,
+      796,
+      500
+    ],
+    "method": "BiRefNet-General-Lite key masks; bidirectional DIS flow; closed-form alpha matting; multilevel foreground decontamination",
+    "alphaVerification": {
+      "minimumTailForegroundRetention": 1.0,
+      "masterFrames": 240,
+      "webpFrames": 240,
+      "vp9Frames": 240,
+      "webpDurationMs": 9999,
+      "allFramesHaveTransparentBackgroundAndOpaqueObjects": true,
+      "allMasterFramesHaveAntialiasedEdges": true,
+      "maxAdjacentSilhouetteAreaChange": 0.038115417393140005
+    },
+    "files": {
+      "kitten-last.webp": 184286,
+      "kitten-first.webp": 176576,
+      "kitten.webm": 3274393,
+      "kitten.mov": 3970271,
+      "kitten.webp": 6925190
+    }
+  }
+}

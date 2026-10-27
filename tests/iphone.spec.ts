@@ -159,3 +159,34 @@ test("iPhone WebKit: touch balloons, mobile navigation and independent drafts", 
     .tap();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 });
+
+test("iPhone WebKit: gift scenes retain alpha, play on visibility and replay on touch", async ({ page }) => {
+  await page.goto("/animation-check");
+  await page.getByRole("button", { name: "Чорний", exact: true }).click();
+  await page.getByRole("button", { name: "Відтворити", exact: true }).click();
+  const native = page.getByRole("button", { name: "Відтворити анімацію левеняти з подарунком" });
+  await native.scrollIntoViewIfNeeded();
+  await expect(native).toHaveAttribute("data-state", "playing");
+  expect(await native.evaluate(element => {
+    const source = element.dataset.format === "webp" ? element.querySelector("img:last-child") as HTMLImageElement : element.querySelector("video") as HTMLVideoElement;
+    const canvas = document.createElement("canvas"); canvas.width = canvas.height = 16;
+    const context = canvas.getContext("2d")!; context.drawImage(source, 0, 0, 16, 16);
+    return context.getImageData(0, 0, 1, 1).data[3];
+  })).toBe(0);
+  await page.getByRole("checkbox", { name: "Резервний WebP" }).check();
+  await page.getByRole("button", { name: "Відтворити", exact: true }).click();
+  const kitten = page.getByRole("button", { name: "Відтворити анімацію кошеняти з подарунком" });
+  await kitten.scrollIntoViewIfNeeded();
+  await expect(kitten).toHaveAttribute("data-state", "playing");
+  await expect(kitten).toHaveAttribute("data-format", "webp");
+  expect(await kitten.locator("img").last().evaluate(element => {
+    const image = element as HTMLImageElement, canvas = document.createElement("canvas");
+    canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+    const context = canvas.getContext("2d")!; context.drawImage(image, 0, 0);
+    return context.getImageData(0, 0, 1, 1).data[3];
+  })).toBe(0);
+  await expect(kitten).toHaveAttribute("data-state", "ended", { timeout: 14000 });
+  await kitten.tap();
+  await expect(kitten).toHaveAttribute("data-state", "playing");
+  await page.screenshot({ path: "output/playwright/iphone-gift-animation.png" });
+});
